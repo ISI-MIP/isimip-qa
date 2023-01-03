@@ -1,14 +1,16 @@
 import argparse
+import logging
 
 from .config import settings
+from .models import Dataset
 
-from isimip_utils.patterns import match_dataset_path
+logger = logging.getLogger(__name__)
 
 
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('path', help='Path of the dataset to process')
+    parser.add_argument('dataset_path', help='Path of the dataset to process')
 
     parser.add_argument('--config-file', dest='config_file',
                         help='File path of the config file')
@@ -31,8 +33,7 @@ def main():
                         help='Path to the log file')
 
     settings.setup(parser)
+    dataset = Dataset(settings.DATASET_PATH, settings.PATTERN, settings.INPUT_PATH, settings.OUTPUT_PATH)
 
-    dataset_path, specifiers = match_dataset_path(settings.PATTERN, settings.PATH)
-
-    for file_name in settings.PATH.parent.glob(f'{settings.PATH.stem}*'):
-        print(file_name)
+    for file_path in dataset.files:
+        print(file_path)
