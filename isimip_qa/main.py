@@ -4,6 +4,8 @@ import logging
 from .config import settings
 from .models import Dataset
 
+from .assessments import assessment_classes
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,7 +21,6 @@ def main():
                         help='base path for the input files')
     parser.add_argument('--output-path', dest='output_path',
                         help='base path for the output files')
-
     parser.add_argument('-i', '--include', dest='include_file',
                         help='Path to a file containing a list of files to include')
     parser.add_argument('-e', '--exclude', dest='exclude_file',
@@ -33,7 +34,8 @@ def main():
                         help='Path to the log file')
 
     settings.setup(parser)
-    dataset = Dataset(settings.DATASET_PATH, settings.PATTERN, settings.INPUT_PATH, settings.OUTPUT_PATH)
+    dataset = Dataset(settings.PATTERN, settings.DATASET_PATH, settings.INPUT_PATH, settings.OUTPUT_PATH)
 
-    for file_path in dataset.files:
-        print(file_path)
+    for assessment_class in assessment_classes:
+        assessment = assessment_class(dataset)
+        assessment.plot()

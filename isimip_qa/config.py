@@ -11,6 +11,8 @@ class Settings(ISIMIPSettings):
     def setup(self, parser):
         super().setup(parser)
         self.DATASET_PATH = Path(settings.DATASET_PATH)
+        self.INPUT_PATH = Path(settings.INPUT_PATH)
+        self.OUTPUT_PATH = Path(settings.OUTPUT_PATH)
         self.PROTOCOL_PATH = Path(*self.DATASET_PATH.parts[:3])
 
     @cached_property
