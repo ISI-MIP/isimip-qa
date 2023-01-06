@@ -1,3 +1,5 @@
+from collections import defaultdict
+from itertools import product
 from pathlib import Path
 
 from isimip_utils.config import ISIMIPSettings
@@ -10,10 +12,36 @@ class Settings(ISIMIPSettings):
 
     def setup(self, parser):
         super().setup(parser)
-        self.DATASET_PATH = Path(settings.DATASET_PATH)
-        self.INPUT_PATH = Path(settings.INPUT_PATH)
-        self.OUTPUT_PATH = Path(settings.OUTPUT_PATH)
-        self.PROTOCOL_PATH = Path(*self.DATASET_PATH.parts[:3])
+        self.PATH = Path(settings.PATH)
+        self.DATASETS_PATH = Path(settings.DATASETS_PATH)
+        self.EXTRACTIONS_PATH = Path(settings.EXTRACTIONS_PATH)
+        self.ASSESSMENTS_PATH = Path(settings.ASSESSMENTS_PATH)
+        self.PROTOCOL_PATH = Path(*self.PATH.parts[:3])
+
+        specifiers_dict = defaultdict(list)
+        for specifier_string in self.SPECIFIERS:
+            identifier, specifiers = specifier_string.split('=')
+            specifiers_dict[identifier] += specifiers.split(',')
+        self.SPECIFIERS = specifiers_dict
+
+        self.DATASET_PATHS = []
+        if self.SPECIFIERS:
+            # create lists of the form [[(identifier, specifier1), (identifier, specifier2), ...], ...]
+            specifier_lists = []
+            for identifier, specifiers in self.SPECIFIERS.items():
+                specifier_lists.append([(identifier, specifier) for specifier in specifiers])
+
+            # create a cartesian product of those lists
+            specifier_product = [dict(item) for item in product(*specifier_lists)]
+
+            # create dataset path for each item in the product
+            for specifier_dict in specifier_product:
+                path_str = str(self.PATH).format(**specifier_dict)
+                path = Path(path_str)
+                path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
+                self.DATASET_PATHS.append(path)
+        else:
+            self.DATASET_PATHS.append(self.PATH)
 
     @cached_property
     def DEFINITIONS(self):

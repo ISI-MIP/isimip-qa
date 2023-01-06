@@ -1,17 +1,17 @@
 from isimip_utils.decorators import cached_property
 from isimip_utils.patterns import match_dataset_path
 
+from .config import settings
+
 
 class Dataset(object):
 
-    def __init__(self, pattern, dataset_path, input_path, output_path):
-        self.path, self.specifiers = match_dataset_path(pattern, dataset_path)
-        self.input_path = input_path
-        self.output_path = output_path
+    def __init__(self, dataset_path):
+        self.path, self.specifiers = match_dataset_path(settings.PATTERN, dataset_path)
 
     @cached_property
     def files(self):
-        path = self.input_path / self.path
+        path = settings.DATASETS_PATH / self.path
         glob = path.parent.glob(f'{path.stem}*')
         return sorted(glob)
 
@@ -30,5 +30,9 @@ class Extraction(object):
     def __init__(self, dataset):
         self.dataset = dataset
 
-    def extract(self):
+    @property
+    def is_complete(self):
+        raise NotImplementedError
+
+    def run(self):
         raise NotImplementedError
