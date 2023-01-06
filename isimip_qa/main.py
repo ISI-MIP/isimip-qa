@@ -40,8 +40,9 @@ def main():
 
     settings.setup(parser)
 
-    for dataset_path in settings.DATASET_PATHS:
-        dataset = Dataset(dataset_path)
-        for assessment_class in assessment_classes:
-            assessment = assessment_class(dataset)
-            assessment.plot()
+    datasets = [Dataset(dataset_path) for dataset_path in settings.DATASET_PATHS]
+
+    for assessment_class in assessment_classes:
+        assessment = assessment_class()
+        assessment.extract(datasets)
+        assessment.plot(datasets)

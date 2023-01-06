@@ -13,34 +13,31 @@ logger = logging.getLogger(__name__)
 
 class YearlyAssessment(Assessment):
 
-    def plot(self):
-        variable = self.dataset.specifiers['variable']
+    extraction_classes = [PointExtraction]
 
-        extraction = PointExtraction(self.dataset, points)
-        if not extraction.is_complete:
-            extraction.run()
-
+    def plot(self, datasets):
         for place, lat, lon in points:
-            csv_path = extraction.get_csv_path(place)
-            svg_path = self.get_svg_path(place)
-            if not svg_path.exists():
-                logger.info(f'create plot {svg_path}')
+            svg_path = self.get_path(datasets, place)
 
+            logger.info(f'create plot {svg_path}')
+            fig = plt.figure(figsize=(20, 10))
+
+            for dataset in datasets:
+                variable = dataset.specifiers['variable']
+                csv_path = PointExtraction().get_path(dataset, place)
                 df = pd.read_csv(csv_path, index_col='time', parse_dates=['time'], infer_datetime_format=True) \
                        .groupby(lambda x: x.year).mean()
+                plt.step(df.index, df[variable], where='mid', label=dataset.path.name)
 
-                fig = plt.figure(figsize=(20, 10))
-                plt.step(df.index, df[variable], where='mid')
-                plt.title(svg_path.name)
-                plt.xlabel('year')
-                plt.ylabel(f'mean {variable}')
+            plt.title(svg_path.name)
+            plt.xlabel('year')
+            plt.ylabel(f'mean {variable}')
+            plt.legend(loc='lower left')
 
-                svg_path.parent.mkdir(exist_ok=True, parents=True)
-                fig.savefig(svg_path, bbox_inches='tight')
+            svg_path.parent.mkdir(exist_ok=True, parents=True)
+            fig.savefig(svg_path, bbox_inches='tight')
 
-    def get_svg_path(self, place):
-        region = self.dataset.specifiers['region']
-        time_step = self.dataset.specifiers['time_step']
-        path_str = str(self.dataset.path).replace(f'_{region}_', f'_{place}_') \
-                                         .replace(f'_{time_step}', '_yearly')
-        return settings.ASSESSMENTS_PATH.joinpath(path_str).with_suffix('.svg')
+    def get_path(self, datasets, place):
+        dataset = datasets[0]
+        path = dataset.replace_name(region=place, time_step='yearly', **settings.SPECIFIERS)
+        return settings.ASSESSMENTS_PATH.joinpath(path).with_suffix('.svg')

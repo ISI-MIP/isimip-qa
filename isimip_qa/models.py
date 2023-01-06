@@ -15,24 +15,29 @@ class Dataset(object):
         glob = path.parent.glob(f'{path.stem}*')
         return sorted(glob)
 
+    def replace_name(self, **specifiers):
+        name = self.path.name
+        for identifier, specifiers in specifiers.items():
+            old = self.specifiers[identifier]
+            new = '+'.join(specifiers) if isinstance(specifiers, list) else specifiers
+            name = name.replace(old.lower(), new.lower())
+        return self.path.parent / name
+
 
 class Assessment(object):
 
-    def __init__(self, dataset):
-        self.dataset = dataset
+    extraction_classes = []
 
-    def plot(self):
+    def extract(self, datasets):
+        for dataset in datasets:
+            for extraction_class in self.extraction_classes:
+                extraction_class().extract(dataset)
+
+    def plot(self, datasets):
         raise NotImplementedError
 
 
 class Extraction(object):
 
-    def __init__(self, dataset):
-        self.dataset = dataset
-
-    @property
-    def is_complete(self):
-        raise NotImplementedError
-
-    def run(self):
+    def extract(self, dataset):
         raise NotImplementedError
