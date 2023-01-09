@@ -17,7 +17,7 @@ class YearlyAssessment(Assessment):
 
     def plot(self, datasets):
         for place, lat, lon in points:
-            svg_path = self.get_path(datasets, place)
+            svg_path = self.get_path(datasets[0], place)
 
             logger.info(f'create plot {svg_path}')
             fig = plt.figure(figsize=(20, 10))
@@ -27,7 +27,7 @@ class YearlyAssessment(Assessment):
                 csv_path = PointExtraction().get_path(dataset, place)
                 df = pd.read_csv(csv_path, index_col='time', parse_dates=['time'], infer_datetime_format=True) \
                        .groupby(lambda x: x.year).mean()
-                plt.step(df.index, df[variable], where='mid', label=dataset.path.name)
+                plt.plot(df.index, df[variable], label=dataset.path.name)
 
             plt.title(svg_path.name)
             plt.xlabel('year')
@@ -37,7 +37,6 @@ class YearlyAssessment(Assessment):
             svg_path.parent.mkdir(exist_ok=True, parents=True)
             fig.savefig(svg_path, bbox_inches='tight')
 
-    def get_path(self, datasets, place):
-        dataset = datasets[0]
+    def get_path(self, dataset, place):
         path = dataset.replace_name(region=place, time_step='yearly', **settings.SPECIFIERS)
-        return settings.ASSESSMENTS_PATH.joinpath(path).with_suffix('.svg')
+        return settings.ASSESSMENTS_PATH.joinpath(path.name).with_suffix('.svg')
