@@ -3,40 +3,44 @@ import logging
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from ..config import settings
 from ..constants import points
 from ..extractions import PointExtraction
+from ..mixins import SVGPlotMixin, GridPlotMixin
 from ..models import Assessment
 
 logger = logging.getLogger(__name__)
 
 
-class DayOfYearlyAssessment(Assessment):
+class DayOfYearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
     extraction_classes = [PointExtraction]
 
     def plot(self, datasets):
         for place, lat, lon in points:
-            svg_path = self.get_path(datasets[0], place)
+            svg_path = self.get_path(datasets, place, 'dayofyearly')
 
             logger.info(f'create plot {svg_path}')
-            fig = plt.figure(figsize=(20, 10))
 
-            for dataset in datasets:
+            nrows, ncols = self.get_grid()
+            fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(6 * ncols, 6 * nrows))
+
+            for i, dataset in enumerate(datasets):
+                irow, icol = self.get_grid_indexes(i)
+                label = self.get_label(i)
                 variable = dataset.specifiers['variable']
+
                 csv_path = PointExtraction().get_path(dataset, place)
                 df = pd.read_csv(csv_path, index_col='time', parse_dates=['time'], infer_datetime_format=True) \
                        .groupby(lambda x: x.dayofyear).mean()
-                plt.step(df.index, df[variable], where='mid', label=dataset.path.name)
 
-            plt.title(svg_path.name)
-            plt.xlabel('day of year')
-            plt.ylabel(f'mean {variable}')
-            plt.legend(loc='lower left')
+                ax = axs.item(irow, icol)
+                ax.step(df.index, df[variable], where='mid', label=label)
+
+                ax.set_title(self.get_title(i))
+                ax.set_xlabel('year')
+                ax.set_ylabel(f'{variable}')
+                if label:
+                    ax.legend(loc='lower left')
 
             svg_path.parent.mkdir(exist_ok=True, parents=True)
             fig.savefig(svg_path, bbox_inches='tight')
-
-    def get_path(self, dataset, place):
-        path = dataset.replace_name(region=place, time_step='dayofyearly', **settings.SPECIFIERS)
-        return settings.ASSESSMENTS_PATH.joinpath(path.name).with_suffix('.svg')

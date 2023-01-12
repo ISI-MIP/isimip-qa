@@ -23,25 +23,22 @@ class Settings(ISIMIPSettings):
             identifier, specifiers = specifier_string.split('=')
             specifiers_dict[identifier] += specifiers.split(',')
         self.SPECIFIERS = specifiers_dict
+        self.IDENTIFIERS = list(self.SPECIFIERS.keys())
 
-        self.DATASET_PATHS = []
-        if self.SPECIFIERS:
-            # create lists of the form [[(identifier, specifier1), (identifier, specifier2), ...], ...]
-            specifier_lists = []
-            for identifier, specifiers in self.SPECIFIERS.items():
-                specifier_lists.append([(identifier, specifier) for specifier in specifiers])
+    @cached_property
+    def DATASETS(self):
+        datasets = []
+        for permutations in self.PERMUTATIONS:
+            specifiers = {key: value for key, value in zip(self.SPECIFIERS.keys(), permutations)}
+            path_str = str(self.PATH).format(**specifiers)
+            path = Path(path_str)
+            path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
+            datasets.append(path)
+        return datasets
 
-            # create a cartesian product of those lists
-            specifier_product = [dict(item) for item in product(*specifier_lists)]
-
-            # create dataset path for each item in the product
-            for specifier_dict in specifier_product:
-                path_str = str(self.PATH).format(**specifier_dict)
-                path = Path(path_str)
-                path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
-                self.DATASET_PATHS.append(path)
-        else:
-            self.DATASET_PATHS.append(self.PATH)
+    @cached_property
+    def PERMUTATIONS(self):
+        return list(product(*self.SPECIFIERS.values()))
 
     @cached_property
     def DEFINITIONS(self):

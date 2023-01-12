@@ -26,6 +26,10 @@ def main():
     parser.add_argument('--assessments-path', dest='assessments_path',
                         help='base path for the output assessments')
 
+    parser.add_argument('-a', '--assessment', dest='assessment', default=None,
+                        help='Run only a specific assessment')
+    parser.add_argument('-g', type=int, dest='grid', default=2, choices=[0, 1, 2],
+                        help='Maximum dimensions of the plot grid [default: 2]')
     parser.add_argument('-i', '--include', dest='include_file',
                         help='Path to a file containing a list of files to include')
     parser.add_argument('-e', '--exclude', dest='exclude_file',
@@ -40,9 +44,10 @@ def main():
 
     settings.setup(parser)
 
-    datasets = [Dataset(dataset_path) for dataset_path in settings.DATASET_PATHS]
+    datasets = [Dataset(dataset_path) for dataset_path in settings.DATASETS]
 
     for assessment_class in assessment_classes:
-        assessment = assessment_class()
-        assessment.extract(datasets)
-        assessment.plot(datasets)
+        if settings.ASSESSMENT is None or assessment_class.__name__ == settings.ASSESSMENT:
+            assessment = assessment_class()
+            assessment.extract(datasets)
+            assessment.plot(datasets)
