@@ -1,11 +1,24 @@
 from .config import settings
 
 
+class CSVExtractionMixin(object):
+
+    def get_path(self, dataset, region):
+        path = dataset.replace_name(region=region.specifier)
+        return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.csv')
+
+    def write_csv(self, df, csv_path):
+        if csv_path.exists():
+            df.to_csv(csv_path, mode='a', header=False)
+        else:
+            csv_path.parent.mkdir(exist_ok=True, parents=True)
+            df.to_csv(csv_path)
+
+
 class SVGPlotMixin(object):
 
-    def get_path(self, datasets, place, time_step):
-        dataset = datasets[0]
-        path = dataset.replace_name(region=place, time_step=time_step, **settings.SPECIFIERS)
+    def get_path(self, dataset, region, time_step):
+        path = dataset.replace_name(region=region.specifier, time_step=time_step, **settings.SPECIFIERS)
         return settings.ASSESSMENTS_PATH.joinpath(path.name).with_suffix('.svg')
 
 

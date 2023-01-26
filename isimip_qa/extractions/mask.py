@@ -6,14 +6,14 @@ from ..models import Extraction
 logger = logging.getLogger(__name__)
 
 
-class PointExtraction(CSVExtractionMixin, Extraction):
+class MaskExtraction(CSVExtractionMixin, Extraction):
 
-    region_types = ['point']
+    region_types = ['mask']
 
     def extract(self, dataset, region, ds):
         csv_path = self.get_path(dataset, region)
         logger.info(f'extract to {csv_path}')
 
-        df = ds.sel(lat=region.lat, lon=region.lon, method='nearest').to_dataframe()
+        df = ds.where(region.mask == 1).mean(dim=('lat', 'lon')).to_dataframe()
 
         self.write_csv(df, csv_path)

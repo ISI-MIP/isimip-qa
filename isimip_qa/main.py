@@ -1,10 +1,9 @@
 import argparse
 import logging
 
-from .config import settings
-from .models import Dataset
+import xarray as xr
 
-from .assessments import assessment_classes
+from .config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +25,10 @@ def main():
     parser.add_argument('--assessments-path', dest='assessments_path',
                         help='base path for the output assessments')
 
-    parser.add_argument('-a', '--assessment', dest='assessment', default=None,
-                        help='Run only a specific assessment')
+    parser.add_argument('-a', '--assessments', dest='assessments', default=None,
+                        help='Run only specific assessments (comma seperated)')
+    parser.add_argument('-r', '--regions', dest='regions', default=None,
+                        help='extract only specific regions (comma seperated)')
     parser.add_argument('-g', type=int, dest='grid', default=2, choices=[0, 1, 2],
                         help='Maximum dimensions of the plot grid [default: 2]')
     parser.add_argument('-i', '--include', dest='include_file',
@@ -44,10 +45,18 @@ def main():
 
     settings.setup(parser)
 
-    datasets = [Dataset(dataset_path) for dataset_path in settings.DATASETS]
+    # run extractions if they are not all complete already
+    if not all([extraction.is_complete for extraction in settings.EXTRACTIONS]):
+        for dataset in settings.DATASETS:
+            for file_path in dataset.files:
+                logger.info(f'load {file_path}')
+                ds = xr.load_dataset(file_path)
 
-    for assessment_class in assessment_classes:
-        if settings.ASSESSMENT is None or assessment_class.__name__ == settings.ASSESSMENT:
-            assessment = assessment_class()
-            assessment.extract(datasets)
-            assessment.plot(datasets)
+                for extraction in settings.EXTRACTIONS:
+                    for region in settings.REGIONS:
+                        if region.type in extraction.region_types:
+                            extraction.extract(dataset, region, ds)
+
+    # run assessments
+    for assessment in settings.ASSESSMENTS:
+        assessment.plot()

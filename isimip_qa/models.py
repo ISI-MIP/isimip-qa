@@ -1,7 +1,13 @@
+import logging
+
+import xarray as xr
+
 from isimip_utils.decorators import cached_property
 from isimip_utils.patterns import match_dataset_path
 
 from .config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class Dataset(object):
@@ -24,20 +30,44 @@ class Dataset(object):
         return self.path.parent / name
 
 
-class Assessment(object):
+class Region(object):
 
-    extraction_classes = []
+    def __init__(self, region):
+        self.type = region['type']
+        self.specifier = region['specifier']
 
-    def extract(self, datasets):
-        for dataset in datasets:
-            for extraction_class in self.extraction_classes:
-                extraction_class().extract(dataset)
+        if self.type == 'point':
+            self.lat = region['lat']
+            self.lon = region['lon']
 
-    def plot(self, datasets):
-        raise NotImplementedError
+        elif self.type == 'mask':
+            mask_ds = xr.load_dataset(settings.DATASETS_PATH / region['mask_path'])
+            self.mask = mask_ds[region['mask_variable']]
 
 
 class Extraction(object):
 
-    def extract(self, dataset):
+    def get_path(self, dataset, region):
+        raise NotImplementedError
+
+    def extract(self, dataset, region):
+        raise NotImplementedError
+
+    @property
+    def is_complete(self):
+        complete = True
+        for dataset in settings.DATASETS:
+            for region in settings.REGIONS:
+                complete &= self.get_path(dataset, region).exists()
+        return complete
+
+
+class Assessment(object):
+
+    extraction_classes = []
+
+    def get_path(self, dataset, region):
+        raise NotImplementedError
+
+    def plot(self):
         raise NotImplementedError
