@@ -51,10 +51,6 @@ class Settings(ISIMIPSettings):
                 if assessment_class.specifier in self.ASSESSMENTS.split(',')
             ]
 
-        # setup logs
-        colorlog.basicConfig(level=self.LOG_LEVEL,
-                             format=' %(log_color)s%(levelname)-8s : %(message)s%(reset)s')
-
     @cached_property
     def EXTRACTIONS(self):
         extraction_classes = set()
