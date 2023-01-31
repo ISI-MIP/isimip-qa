@@ -39,7 +39,7 @@ class YearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
                        .groupby(lambda x: x.year).mean()
 
                 ax = axs.item(irow, icol)
-                ax.step(df.index, df[variable], where='mid', label=label)
+                ax.step(df.index, df[df.columns[0]], where='mid', label=label)
 
                 ax.set_title(self.get_title(i))
                 ax.set_xlabel('date')

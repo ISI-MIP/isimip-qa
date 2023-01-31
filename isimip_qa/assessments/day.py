@@ -38,7 +38,7 @@ class DayAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
                 df = pd.read_csv(csv_path, index_col='time', parse_dates=['time'], infer_datetime_format=True)
 
                 ax = axs.item(irow, icol)
-                ax.plot(df.index, df[variable], label=label)
+                ax.plot(df.index, df[df.columns[0]], label=label)
 
                 ax.set_title(self.get_title(i))
                 ax.set_xlabel('date')
