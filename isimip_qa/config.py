@@ -2,8 +2,6 @@ from collections import defaultdict
 from itertools import product
 from pathlib import Path
 
-import colorlog
-
 from isimip_utils.config import ISIMIPSettings
 from isimip_utils.decorators import cached_property
 from isimip_utils.fetch import (fetch_definitions, fetch_pattern,
@@ -24,6 +22,9 @@ class Settings(ISIMIPSettings):
         self.EXTRACTIONS_PATH = Path(settings.EXTRACTIONS_PATH)
         self.ASSESSMENTS_PATH = Path(settings.ASSESSMENTS_PATH)
         self.PROTOCOL_PATH = Path(*self.PATH.parts[:3])
+
+        # create a dict to store masks
+        settings.MASKS = {}
 
         # setup specifiers
         specifiers_dict = defaultdict(list)

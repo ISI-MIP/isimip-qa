@@ -1,9 +1,8 @@
 import argparse
 import logging
 
-import xarray as xr
-
 from .config import settings
+from .models import Extraction, Assessment
 
 logger = logging.getLogger(__name__)
 
@@ -45,18 +44,5 @@ def main():
 
     settings.setup(parser)
 
-    # run extractions if they are not all complete already
-    if not all([extraction.is_complete for extraction in settings.EXTRACTIONS]):
-        for dataset in settings.DATASETS:
-            for file_path in dataset.files:
-                logger.info(f'load {file_path}')
-                ds = xr.load_dataset(file_path)
-
-                for extraction in settings.EXTRACTIONS:
-                    for region in settings.REGIONS:
-                        if region.type in extraction.region_types:
-                            extraction.extract(dataset, region, ds)
-
-    # run assessments
-    for assessment in settings.ASSESSMENTS:
-        assessment.plot()
+    Extraction.run()
+    Assessment.run()

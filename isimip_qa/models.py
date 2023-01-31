@@ -7,6 +7,7 @@ from isimip_utils.patterns import match_dataset_path
 
 from .config import settings
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,8 +42,18 @@ class Region(object):
             self.lon = region['lon']
 
         elif self.type == 'mask':
-            mask_ds = xr.load_dataset(settings.DATASETS_PATH / region['mask_path'])
-            self.mask = mask_ds[region['mask_variable']]
+            if region['mask_path'] not in settings.MASKS:
+                settings.MASKS[region['mask_path']] = Mask(region['mask_path'])
+            self.mask = settings.MASKS[region['mask_path']][region['mask_variable']]
+
+
+class Mask(object):
+
+    def __init__(self, mask_path):
+        self.ds = xr.load_dataset(settings.DATASETS_PATH / mask_path)
+
+    def __getitem__(self, item):
+        return self.ds[item]
 
 
 class Extraction(object):
@@ -61,6 +72,22 @@ class Extraction(object):
                 complete &= self.get_path(dataset, region).exists()
         return complete
 
+    @staticmethod
+    def run():
+        is_complete = all([extraction.is_complete for extraction in settings.EXTRACTIONS])
+        if is_complete:
+            return
+
+        for dataset in settings.DATASETS:
+            for file_path in dataset.files:
+                logger.info(f'load {file_path}')
+                ds = xr.load_dataset(file_path)
+
+                for extraction in settings.EXTRACTIONS:
+                    for region in settings.REGIONS:
+                        if region.type in extraction.region_types:
+                            extraction.extract(dataset, region, ds)
+
 
 class Assessment(object):
 
@@ -71,3 +98,8 @@ class Assessment(object):
 
     def plot(self):
         raise NotImplementedError
+
+    @staticmethod
+    def run():
+        for assessment in settings.ASSESSMENTS:
+            assessment.plot()
