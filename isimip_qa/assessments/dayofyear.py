@@ -17,7 +17,7 @@ class DayOfYearMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
     def plot(self, region):
         extraction = self.get_extraction(region)
-        svg_path = self.get_path(settings.DATASETS[0], region, self.specifier)
+        svg_path = self.get_svg_path(settings.DATASETS[0], region, self.specifier)
 
         logger.info(f'create plot {svg_path}')
 
