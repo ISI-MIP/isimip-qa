@@ -20,7 +20,7 @@ class Dataset(object):
     def files(self):
         path = settings.DATASETS_PATH / self.path
         glob = path.parent.glob(f'{path.stem}*')
-        return sorted(glob)
+        return [File(file_path, index) for index, file_path in enumerate(sorted(glob))]
 
     def replace_name(self, **specifiers):
         name = self.path.name
@@ -29,6 +29,17 @@ class Dataset(object):
             new = '+'.join(specifiers) if isinstance(specifiers, list) else specifiers
             name = name.replace(old.lower(), new.lower())
         return self.path.parent / name
+
+
+class File(object):
+
+    def __init__(self, file_path, index):
+        self.path = file_path
+        self.index = index
+
+    def load(self):
+        logger.info(f'load {self.path}')
+        self.ds = xr.load_dataset(self.path)
 
 
 class Region(object):
@@ -58,48 +69,24 @@ class Mask(object):
 
 class Extraction(object):
 
-    def get_path(self, dataset, region):
+    def extract(self, dataset, region, file):
         raise NotImplementedError
 
-    def extract(self, dataset, region):
+    def read(self, dataset, region):
         raise NotImplementedError
 
-    @property
-    def is_complete(self):
-        complete = True
-        for dataset in settings.DATASETS:
-            for region in settings.REGIONS:
-                complete &= self.get_path(dataset, region).exists()
-        return complete
-
-    @staticmethod
-    def run():
-        is_complete = all([extraction.is_complete for extraction in settings.EXTRACTIONS])
-        if is_complete:
-            return
-
-        for dataset in settings.DATASETS:
-            for file_path in dataset.files:
-                logger.info(f'load {file_path}')
-                ds = xr.load_dataset(file_path)
-
-                for extraction in settings.EXTRACTIONS:
-                    for region in settings.REGIONS:
-                        if region.type in extraction.region_types:
-                            extraction.extract(dataset, region, ds)
+    def exists(self, dataset, region):
+        raise NotImplementedError
 
 
 class Assessment(object):
 
     extraction_classes = []
 
-    def get_path(self, dataset, region):
-        raise NotImplementedError
+    def get_extraction(self, region):
+        for extraction_class in self.extraction_classes:
+            if region.type in extraction_class.region_types:
+                return extraction_class()
 
-    def plot(self):
+    def plot(self, region):
         raise NotImplementedError
-
-    @staticmethod
-    def run():
-        for assessment in settings.ASSESSMENTS:
-            assessment.plot()

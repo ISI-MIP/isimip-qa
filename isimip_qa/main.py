@@ -2,7 +2,6 @@ import argparse
 import logging
 
 from .config import settings
-from .models import Extraction, Assessment
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +27,15 @@ def main():
                         help='Run only specific assessments (comma seperated)')
     parser.add_argument('-r', '--regions', dest='regions', default=None,
                         help='extract only specific regions (comma seperated)')
-    parser.add_argument('-g', type=int, dest='grid', default=2, choices=[0, 1, 2],
+    parser.add_argument('-g', '--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
                         help='Maximum dimensions of the plot grid [default: 2]')
-    parser.add_argument('-i', '--include', dest='include_file',
-                        help='Path to a file containing a list of files to include')
-    parser.add_argument('-e', '--exclude', dest='exclude_file',
-                        help='Path to a file containing a list of files to exclude')
+    parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
+                        help='Always run extractions')
+    parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,
+                        help='Run only assessments')
+    parser.add_argument('--assessments-only', dest='assessments_only', action='store_true', default=False,
+                        help='Run only assessments')
+
     parser.add_argument('--protocol-location', dest='protocol_locations',
                         default='https://protocol.isimip.org https://protocol2.isimip.org',
                         help='URL or file path to the protocol')
@@ -44,5 +46,31 @@ def main():
 
     settings.setup(parser)
 
-    Extraction.run()
-    Assessment.run()
+    # run the extractions
+    if not settings.ASSESSMENTS_ONLY:
+        # check if the extractions are already complete
+        if settings.FORCE:
+            # the --force option was set, we assume they are not complete
+            is_complete = False
+        else:
+            is_complete = True
+            for dataset in settings.DATASETS:
+                for extraction in settings.EXTRACTIONS:
+                    for region in settings.REGIONS:
+                        is_complete &= extraction.exists(dataset, region)
+
+        # if the extractions were not complete, run the extractions
+        if not is_complete:
+            for dataset in settings.DATASETS:
+                for file in dataset.files:
+                    file.load()
+                    for extraction in settings.EXTRACTIONS:
+                        for region in settings.REGIONS:
+                            if region.type in extraction.region_types:
+                                extraction.extract(dataset, region, file)
+
+    # run the assessments
+    if not settings.EXTRACTIONS_ONLY:
+        for assessment in settings.ASSESSMENTS:
+            for region in settings.REGIONS:
+                assessment.plot(region)
