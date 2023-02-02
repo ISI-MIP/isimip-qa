@@ -3,7 +3,6 @@ import logging
 import matplotlib.pyplot as plt
 
 from ..config import settings
-from ..extractions import PointExtraction, MaskExtraction
 from ..mixins import SVGPlotMixin, GridPlotMixin
 from ..models import Assessment
 
@@ -12,12 +11,11 @@ logger = logging.getLogger(__name__)
 
 class DayOfYearMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
-    specifier = 'dayofyearmean'
-    extraction_classes = [PointExtraction, MaskExtraction]
+    specifier = 'dayofyear'
+    extractions = ['count', 'mean']
 
-    def plot(self, region):
-        extraction = self.get_extraction(region)
-        svg_path = self.get_svg_path(settings.DATASETS[0], region, self.specifier)
+    def plot(self, extraction, region):
+        svg_path = self.get_svg_path(settings.DATASETS[0], region, extraction)
 
         logger.info(f'create plot {svg_path}')
 

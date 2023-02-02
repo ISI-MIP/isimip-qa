@@ -41,6 +41,9 @@ class File(object):
         logger.info(f'load {self.path}')
         self.ds = xr.load_dataset(self.path)
 
+    def unload(self):
+        self.ds = None
+
 
 class Region(object):
 
@@ -69,7 +72,9 @@ class Mask(object):
 
 class Extraction(object):
 
-    def extract(self, dataset, region, file):
+    region_types = None
+
+    def extract(self, dataset, region, file, ds):
         raise NotImplementedError
 
     def read(self, dataset, region):
@@ -81,9 +86,10 @@ class Extraction(object):
 
 class Assessment(object):
 
-    extraction_classes = []
+    extractions = None
+    region_types = None
 
-    def get_extraction(self, region):
+    def get_extraction(self, extraction, region):
         for extraction_class in self.extraction_classes:
             if region.type in extraction_class.region_types:
                 return extraction_class()

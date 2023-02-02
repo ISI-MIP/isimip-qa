@@ -23,6 +23,8 @@ def main():
     parser.add_argument('--assessments-path', dest='assessments_path',
                         help='base path for the output assessments')
 
+    parser.add_argument('-e', '--extractions', dest='extractions', default=None,
+                        help='Run only specific extractions (comma seperated)')
     parser.add_argument('-a', '--assessments', dest='assessments', default=None,
                         help='Run only specific assessments (comma seperated)')
     parser.add_argument('-r', '--regions', dest='regions', default=None,
@@ -66,11 +68,18 @@ def main():
                     file.load()
                     for extraction in settings.EXTRACTIONS:
                         for region in settings.REGIONS:
-                            if region.type in extraction.region_types:
+                            if extraction.region_types is None \
+                                    or region.type in extraction.region_types:
                                 extraction.extract(dataset, region, file)
+                    file.unload()
 
     # run the assessments
     if not settings.EXTRACTIONS_ONLY:
         for assessment in settings.ASSESSMENTS:
-            for region in settings.REGIONS:
-                assessment.plot(region)
+            for extraction in settings.EXTRACTIONS:
+                if assessment.extractions is None \
+                        or extraction.specifier in assessment.extractions:
+                    for region in settings.REGIONS:
+                        if assessment.region_types is None \
+                                or region.type in assessment.region_types:
+                            assessment.plot(extraction, region)

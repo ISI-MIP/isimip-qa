@@ -18,4 +18,4 @@ for root, dirs, files in os.walk(path):
             module = importlib.import_module(module_name)
             for module_class_name, module_class in inspect.getmembers(module, inspect.isclass):
                 if module_class != Extraction and issubclass(module_class, Extraction):
-                    globals()[module_class_name] = module_class
+                    extraction_classes.add(module_class)

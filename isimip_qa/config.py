@@ -13,6 +13,7 @@ class Settings(ISIMIPSettings):
     def setup(self, parser):
         # import here to prevent circular inclusion
         from .assessments import assessment_classes
+        from .extractions import extraction_classes
         from .constants import regions
         from .models import Region
 
@@ -43,6 +44,15 @@ class Settings(ISIMIPSettings):
                 if region.get('specifier') in self.REGIONS.split(',')
             ]
 
+        # setup extractions
+        if self.EXTRACTIONS is None:
+            self.EXTRACTIONS = [extraction_class() for extraction_class in extraction_classes]
+        else:
+            self.EXTRACTIONS = [
+                extraction_class() for extraction_class in extraction_classes
+                if extraction_class.specifier in self.EXTRACTIONS.split(',')
+            ]
+
         # setup assessments
         if self.ASSESSMENTS is None:
             self.ASSESSMENTS = [assessment_class() for assessment_class in assessment_classes]
@@ -51,15 +61,6 @@ class Settings(ISIMIPSettings):
                 assessment_class() for assessment_class in assessment_classes
                 if assessment_class.specifier in self.ASSESSMENTS.split(',')
             ]
-
-    @cached_property
-    def EXTRACTIONS(self):
-        extraction_classes = set()
-        for assessment_class in self.ASSESSMENTS:
-            extraction_classes.update(assessment_class.extraction_classes)
-        return [
-            extraction_class() for extraction_class in extraction_classes
-        ]
 
     @cached_property
     def DATASETS(self):

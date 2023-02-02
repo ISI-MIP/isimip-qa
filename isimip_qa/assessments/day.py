@@ -3,7 +3,6 @@ import logging
 import matplotlib.pyplot as plt
 
 from ..config import settings
-from ..extractions import PointExtraction, MaskExtraction
 from ..mixins import SVGPlotMixin, GridPlotMixin
 from ..models import Assessment
 
@@ -13,11 +12,10 @@ logger = logging.getLogger(__name__)
 class DailyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
     specifier = 'daily'
-    extraction_classes = [PointExtraction, MaskExtraction]
+    extractions = ['count', 'mean']
 
-    def plot(self, region):
-        extraction = self.get_extraction(region)
-        svg_path = self.get_svg_path(settings.DATASETS[0], region, self.specifier)
+    def plot(self, extraction, region):
+        svg_path = self.get_svg_path(settings.DATASETS[0], region, extraction)
 
         logger.info(f'create plot {svg_path}')
 

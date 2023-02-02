@@ -12,6 +12,7 @@ class CSVExtractionMixin(object):
 
     def get_csv_path(self, dataset, region):
         path = dataset.replace_name(region=region.specifier)
+        path = path.with_name(path.name + '_' + self.specifier)
         return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.csv')
 
     def write_csv(self, ds, attrs, csv_path, first_file):
@@ -36,8 +37,9 @@ class CSVExtractionMixin(object):
 
 class SVGPlotMixin(object):
 
-    def get_svg_path(self, dataset, region, time_step):
-        path = dataset.replace_name(region=region.specifier, time_step=time_step, **settings.SPECIFIERS)
+    def get_svg_path(self, dataset, region, extraction):
+        path = dataset.replace_name(region=region.specifier, time_step=self.specifier)
+        path = path.with_name(path.name + '_' + extraction.specifier)
         return settings.ASSESSMENTS_PATH.joinpath(path.name).with_suffix('.svg')
 
 
