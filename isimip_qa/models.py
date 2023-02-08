@@ -20,7 +20,12 @@ class Dataset(object):
     def files(self):
         path = settings.DATASETS_PATH / self.path
         glob = path.parent.glob(f'{path.stem}*')
-        return [File(file_path, index) for index, file_path in enumerate(sorted(glob))]
+        files = [File(file_path, index) for index, file_path in enumerate(sorted(glob))]
+
+        if files:
+            return files
+        else:
+            raise RuntimeError(f'No files found for {path}')
 
     def replace_name(self, **specifiers):
         name = self.path.name
