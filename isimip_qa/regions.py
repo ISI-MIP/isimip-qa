@@ -1,8 +1,23 @@
+regions = [
+    {
+        'type': 'global',
+        'specifier': 'global'
+    }
+]
+
 points = [
     ('potsdam', 52.395833, 13.061389),
     ('cairo', 30.056111, 31.239444),
     ('jakarta', -6.175, 106.828611)
 ]
+
+for specifier, lat, lon in points:
+    regions.append({
+        'type': 'point',
+        'specifier': specifier,
+        'lon': lat,
+        'lat': lon
+    })
 
 countrymask_path = 'ISIMIP3a/InputData/geo_conditions/countrymasks/countrymasks_fractional.nc'
 countries = [
@@ -29,16 +44,6 @@ countries = [
     'UKR', 'ARE', 'TZA', 'VIR', 'USA', 'URY', 'UZB', 'VUT', 'VEN', 'VNM',
     'ESH', 'YEM', 'ZMB', 'ZWE'
 ]
-
-regions = []
-
-for specifier, lat, lon in points:
-    regions.append({
-        'type': 'point',
-        'specifier': specifier,
-        'lon': lat,
-        'lat': lon
-    })
 
 for code in countries:
     regions.append({

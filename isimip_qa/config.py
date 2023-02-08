@@ -14,7 +14,7 @@ class Settings(ISIMIPSettings):
         # import here to prevent circular inclusion
         from .assessments import assessment_classes
         from .extractions import extraction_classes
-        from .constants import regions
+        from .regions import regions
         from .models import Region
 
         super().setup(parser)
@@ -37,12 +37,13 @@ class Settings(ISIMIPSettings):
 
         # setup regions
         if self.REGIONS is None:
-            self.REGIONS = [Region(region) for region in regions]
-        else:
-            self.REGIONS = [
-                Region(region) for region in regions
-                if region.get('specifier') in self.REGIONS.split(',')
-            ]
+            self.REGIONS = 'global'
+        self.REGIONS = [
+            Region(region) for region in regions
+            if region.get('specifier') in (
+                self.REGIONS.split(',') if (self.REGIONS is not None) else ['global']
+            )
+        ]
 
         # setup extractions
         if self.EXTRACTIONS is None:
