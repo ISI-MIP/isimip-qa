@@ -59,7 +59,9 @@ def main():
             for dataset in settings.DATASETS:
                 for extraction in settings.EXTRACTIONS:
                     for region in settings.REGIONS:
-                        is_complete &= extraction.exists(dataset, region)
+                        if extraction.region_types is None \
+                                    or region.type in extraction.region_types:
+                            is_complete &= extraction.exists(dataset, region)
 
         # if the extractions were not complete, run the extractions
         if not is_complete:
@@ -80,6 +82,8 @@ def main():
                 if assessment.extractions is None \
                         or extraction.specifier in assessment.extractions:
                     for region in settings.REGIONS:
-                        if assessment.region_types is None \
-                                or region.type in assessment.region_types:
-                            assessment.plot(extraction, region)
+                        if extraction.region_types is None \
+                                or region.type in extraction.region_types:
+                            if assessment.region_types is None \
+                                    or region.type in assessment.region_types:
+                                assessment.plot(extraction, region)
