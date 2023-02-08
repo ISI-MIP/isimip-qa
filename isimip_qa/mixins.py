@@ -38,7 +38,7 @@ class CSVExtractionMixin(object):
 class SVGPlotMixin(object):
 
     def get_svg_path(self, dataset, region, extraction):
-        path = dataset.replace_name(region=region.specifier, time_step=self.specifier)
+        path = dataset.replace_name(region=region.specifier, time_step=self.specifier, **settings.SPECIFIERS)
         path = path.with_name(path.name + '_' + extraction.specifier)
         return settings.ASSESSMENTS_PATH.joinpath(path.name).with_suffix('.svg')
 
