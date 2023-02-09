@@ -25,17 +25,18 @@ class DayOfYearMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
         for i, dataset in enumerate(settings.DATASETS):
             irow, icol = self.get_grid_indexes(i)
             label = self.get_label(i)
-            variable = dataset.specifiers['variable']
 
             df, attrs = extraction.read(dataset, region)
             df = df.groupby(lambda x: x.dayofyear).mean()
 
+            var = df.columns[0]
+
             ax = axs.item(irow, icol)
-            ax.scatter(df.index, df[df.columns[0]], s=10, marker='.', label=label)
+            ax.scatter(df.index, df[var], s=10, marker='.', label=label)
 
             ax.set_title(self.get_title(i))
             ax.set_xlabel('day of the year')
-            ax.set_ylabel(f'{variable} [{attrs.get("units")}]')
+            ax.set_ylabel(f'{var} [{attrs.get("units")}]')
             if label:
                 ax.legend(loc='lower left')
 
