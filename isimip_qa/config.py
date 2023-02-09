@@ -22,7 +22,6 @@ class Settings(ISIMIPSettings):
         self.DATASETS_PATH = Path(settings.DATASETS_PATH)
         self.EXTRACTIONS_PATH = Path(settings.EXTRACTIONS_PATH)
         self.ASSESSMENTS_PATH = Path(settings.ASSESSMENTS_PATH)
-        self.PROTOCOL_PATH = Path(*self.PATH.parts[:3])
 
         # create a dict to store masks
         settings.MASKS = {}
@@ -82,22 +81,22 @@ class Settings(ISIMIPSettings):
     @cached_property
     def DEFINITIONS(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_definitions(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
+        return fetch_definitions(self.PROTOCOL_LOCATIONS.split(), self.PATH)
 
     @cached_property
     def PATTERN(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_pattern(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
+        return fetch_pattern(self.PROTOCOL_LOCATIONS.split(), self.PATH)
 
     @cached_property
     def SCHEMA(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_schema(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
+        return fetch_schema(self.PROTOCOL_LOCATIONS.split(), self.PATH)
 
     @cached_property
     def TREE(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_tree(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
+        return fetch_tree(self.PROTOCOL_LOCATIONS.split(), self.PATH)
 
 
 settings = Settings()
