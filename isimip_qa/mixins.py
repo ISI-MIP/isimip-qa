@@ -1,6 +1,7 @@
 import json
 import logging
 
+import numpy as np
 import pandas as pd
 
 from .config import settings
@@ -29,10 +30,16 @@ class CSVExtractionMixin(object):
 
     def read(self, dataset, region):
         csv_path = self.get_csv_path(dataset, region)
-        return (
-            pd.read_csv(csv_path, index_col='time', parse_dates=['time'], infer_datetime_format=True),
-            json.load(csv_path.with_suffix('.json').open())
-        )
+
+        # read the dataframe from the csv
+        df = pd.read_csv(csv_path, parse_dates=['time'],
+                         date_parser=lambda column: np.array(column, dtype='datetime64'))
+        df.set_index('time', inplace=True)
+
+        # read the attrs from the json file
+        attrs = json.load(csv_path.with_suffix('.json').open())
+
+        return df, attrs
 
 
 class SVGPlotMixin(object):
