@@ -29,11 +29,20 @@ class CSVExtractionMixin(object):
         return csv_path.exists() and csv_path.with_suffix('.json').exists()
 
     def read(self, dataset, region):
+        # pandas cannot handle datetimes before 1677-09-22 so we need to
+        # manually set every timestamp before to None using a custom date_parser
+        def parse_timestamps(timestamp):
+            try:
+                return pd.Timestamp(np.datetime64(timestamp))
+            except pd.errors.OutOfBoundsDatetime:
+                return pd.NaT
+
+        # get the csv_path
         csv_path = self.get_csv_path(dataset, region)
 
         # read the dataframe from the csv
-        df = pd.read_csv(csv_path, parse_dates=['time'],
-                         date_parser=lambda column: np.array(column, dtype='datetime64'))
+        df = pd.read_csv(csv_path, parse_dates=['time'], date_parser=parse_timestamps)
+        df = df[df.time.notnull()]
         df.set_index('time', inplace=True)
 
         # read the attrs from the json file
