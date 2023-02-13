@@ -18,10 +18,10 @@ class Settings(ISIMIPSettings):
         from .models import Region
 
         super().setup(parser)
-        self.PATH = Path(settings.PATH)
-        self.DATASETS_PATH = Path(settings.DATASETS_PATH)
-        self.EXTRACTIONS_PATH = Path(settings.EXTRACTIONS_PATH)
-        self.ASSESSMENTS_PATH = Path(settings.ASSESSMENTS_PATH)
+        self.PATH = Path(settings.PATH).expanduser()
+        self.DATASETS_PATH = Path(settings.DATASETS_PATH).expanduser()
+        self.EXTRACTIONS_PATH = Path(settings.EXTRACTIONS_PATH).expanduser()
+        self.ASSESSMENTS_PATH = Path(settings.ASSESSMENTS_PATH).expanduser()
 
         # create a dict to store masks
         settings.MASKS = {}
