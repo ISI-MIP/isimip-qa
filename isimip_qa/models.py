@@ -42,6 +42,10 @@ class File(object):
         self.path = file_path
         self.index = index
 
+    @property
+    def first(self):
+        return self.index == 0
+
     def load(self):
         logger.info(f'load {self.path}')
         self.ds = xr.load_dataset(self.path)

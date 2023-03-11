@@ -31,6 +31,8 @@ def main():
                         help='extract only specific regions (comma seperated)')
     parser.add_argument('-g', '--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
                         help='Maximum dimensions of the plot grid [default: 2]')
+    parser.add_argument('-t', '--times', dest='times', default=None,
+                        help='Time steps to use for maps (comma seperated)')
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                         help='Always run extractions')
     parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,

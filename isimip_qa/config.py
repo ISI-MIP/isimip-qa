@@ -26,6 +26,10 @@ class Settings(ISIMIPSettings):
         # create a dict to store masks
         settings.MASKS = {}
 
+        # setup time
+        if self.TIMES:
+            self.TIMES = sorted(self.TIMES.split(','))
+
         # setup specifiers
         specifiers_dict = defaultdict(list)
         for specifier_string in self.SPECIFIERS:

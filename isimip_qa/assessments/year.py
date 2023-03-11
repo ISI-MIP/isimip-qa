@@ -15,9 +15,9 @@ class YearlyMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
     extractions = ['count', 'mean']
 
     def plot(self, extraction, region):
-        svg_path = self.get_svg_path(settings.DATASETS[0], region, extraction)
+        path = self.get_path(settings.DATASETS[0], region, extraction)
 
-        logger.info(f'create plot {svg_path}')
+        logger.info(f'create plot {path}')
 
         nrows, ncols = self.get_grid()
         fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(6 * ncols, 6 * nrows))
@@ -40,5 +40,5 @@ class YearlyMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             if label:
                 ax.legend(loc='lower left')
 
-        svg_path.parent.mkdir(exist_ok=True, parents=True)
-        fig.savefig(svg_path, bbox_inches='tight')
+        path.parent.mkdir(exist_ok=True, parents=True)
+        fig.savefig(path, bbox_inches='tight')
