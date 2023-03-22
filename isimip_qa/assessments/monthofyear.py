@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from ..config import settings
 from ..mixins import SVGPlotMixin, GridPlotMixin
 from ..models import Assessment
+from ..extractions.attrs import AttrsExtraction
 
 logger = logging.getLogger(__name__)
 
@@ -26,10 +27,11 @@ class DayOfYearMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             irow, icol = self.get_grid_indexes(i)
             label = self.get_label(i)
 
-            df, attrs = extraction.read(dataset, region)
+            df = extraction.read(dataset, region)
             df = df.groupby(lambda x: x.month).mean()
 
             var = df.columns[0]
+            attrs = AttrsExtraction().read(dataset, region)
 
             ax = axs.item(irow, icol)
             ax.step(df.index, df[var], where='mid', label=label)

@@ -63,7 +63,7 @@ class JSONExtractionMixin(object):
 
     def read(self, dataset, region):
         path = self.get_path(dataset, region)
-        json.load(path.open())
+        return json.load(path.open())
 
 
 class NetCdfExtractionMixin(object):
@@ -93,7 +93,7 @@ class NetCdfExtractionMixin(object):
         return xr.load_dataset(settings.DATASETS_PATH / path)
 
 
-class SVGPlotMixin(object):
+class PlotMixin(object):
 
     def get_path(self, dataset, region, extraction):
         settings_specifiers = {}
@@ -102,7 +102,19 @@ class SVGPlotMixin(object):
 
         path = dataset.replace_name(region=region.specifier, time_step=self.specifier, **settings_specifiers)
         path = path.with_name(path.name + '_' + extraction.specifier)
-        return settings.ASSESSMENTS_PATH.joinpath(path.name).with_suffix('.svg')
+        return settings.ASSESSMENTS_PATH.joinpath(path.name)
+
+
+class SVGPlotMixin(PlotMixin):
+
+    def get_path(self, dataset, region, extraction):
+        return super().get_path(dataset, region, extraction).with_suffix('.svg')
+
+
+class PNGPlotMixin(PlotMixin):
+
+    def get_path(self, dataset, region, extraction):
+        return super().get_path(dataset, region, extraction).with_suffix('.png')
 
 
 class GridPlotMixin(object):
