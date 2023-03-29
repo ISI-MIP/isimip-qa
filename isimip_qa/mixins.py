@@ -12,9 +12,11 @@ logger = logging.getLogger(__name__)
 
 class CSVExtractionMixin(object):
 
-    def get_path(self, dataset, region):
+    def get_path(self, dataset, region, append=None):
         path = dataset.replace_name(region=region.specifier)
         path = path.with_name(path.name + '_' + self.specifier)
+        if append is not None:
+            path = path.with_name(path.name + '_' + append)
         return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.csv')
 
     def exists(self, dataset, region):
@@ -23,9 +25,9 @@ class CSVExtractionMixin(object):
     def write(self, ds, path, first):
         if first:
             path.parent.mkdir(exist_ok=True, parents=True)
-            ds.to_dataframe().to_csv(path)
+            ds.to_dataframe(dim_order=('lon', 'lat', 'time')).to_csv(path)
         else:
-            ds.to_dataframe().to_csv(path, mode='a', header=False)
+            ds.to_dataframe(dim_order=('lon', 'lat', 'time')).to_csv(path, mode='a', header=False)
 
     def read(self, dataset, region):
         # pandas cannot handle datetimes before 1677-09-22 so we need to
@@ -100,7 +102,7 @@ class PlotMixin(object):
         for identifier, specifiers in settings.SPECIFIERS.items():
             settings_specifiers[identifier] = ['various'] if len(specifiers) > 5 else specifiers
 
-        path = dataset.replace_name(region=region.specifier, time_step=self.specifier, **settings_specifiers)
+        path = dataset.replace_name(region=region.specifier, **settings_specifiers)
         path = path.with_name(path.name + '_' + extraction.specifier)
         return settings.ASSESSMENTS_PATH.joinpath(path.name)
 

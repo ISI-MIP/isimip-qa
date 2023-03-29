@@ -48,7 +48,10 @@ class File(object):
 
     def load(self):
         logger.info(f'load {self.path}')
-        self.ds = xr.load_dataset(self.path)
+        if settings.LOAD:
+            self.ds = xr.load_dataset(self.path)
+        else:
+            self.ds = xr.open_dataset(self.path)
 
     def unload(self):
         self.ds = None

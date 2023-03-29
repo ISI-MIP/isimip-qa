@@ -31,14 +31,23 @@ def main():
                         help='extract only specific regions (comma seperated)')
     parser.add_argument('-g', '--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
                         help='Maximum dimensions of the plot grid [default: 2]')
-    parser.add_argument('-t', '--times', dest='times', default=None,
-                        help='Time steps to use for maps (comma seperated)')
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                         help='Always run extractions')
+    parser.add_argument('-l', '--load', dest='load', action='store_true', default=False,
+                        help='Load NetCDF datasets completely in memory')
     parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,
                         help='Run only assessments')
     parser.add_argument('--assessments-only', dest='assessments_only', action='store_true', default=False,
                         help='Run only assessments')
+
+    parser.add_argument('--times', dest='times', default=None,
+                        help='Time steps to use for maps (comma seperated)')
+    parser.add_argument('--vmin', type=float, dest='vmin', default=None,
+                        help='Fixed minimal colormap value for maps.')
+    parser.add_argument('--vmax', type=float, dest='vmax', default=None,
+                        help='Fixed maximum colormap value for maps.')
+    parser.add_argument('--cmap', dest='cmap', default='viridis',
+                        help='Colormap to use for maps.')
 
     parser.add_argument('--protocol-location', dest='protocol_locations',
                         default='https://protocol.isimip.org https://protocol2.isimip.org',

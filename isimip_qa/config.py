@@ -18,6 +18,13 @@ class Settings(ISIMIPSettings):
         from .models import Region
 
         super().setup(parser)
+        if self.DATASETS_PATH is None:
+            parser.error('no DATASETS_PATH was provided.')
+        if self.EXTRACTIONS_PATH is None:
+            parser.error('no EXTRACTIONS_PATH was provided.')
+        if self.ASSESSMENTS_PATH is None:
+            parser.error('no ASSESSMENTS_PATH was provided.')
+
         self.PATH = Path(settings.PATH).expanduser()
         self.DATASETS_PATH = Path(settings.DATASETS_PATH).expanduser()
         self.EXTRACTIONS_PATH = Path(settings.EXTRACTIONS_PATH).expanduser()
