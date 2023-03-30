@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('path', help='Path of the dataset to process, can contain indentifier placeholders, e.g. {model}')
+    parser.add_argument('path', help='Path of the dataset to process')
     parser.add_argument('specifiers', nargs='*',
                         help='Specifiers in the from identifier=specifier1,specifier2,...')
 

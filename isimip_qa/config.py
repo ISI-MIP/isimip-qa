@@ -77,14 +77,29 @@ class Settings(ISIMIPSettings):
     @cached_property
     def DATASETS(self):
         from .models import Dataset
-        datasets = []
-        for permutations in self.PERMUTATIONS:
-            specifiers = {key: value for key, value in zip(self.SPECIFIERS.keys(), permutations)}
-            path_str = str(self.PATH).format(**specifiers)
-            path = Path(path_str)
-            path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
-            datasets.append(Dataset(path))
-        return datasets
+
+        dataset = Dataset(self.PATH)
+
+        if self.SPECIFIERS:
+            datasets = []
+
+            for permutations in self.PERMUTATIONS:
+                specifiers_map = {dataset.specifiers[key]: value for key, value in zip(self.SPECIFIERS.keys(), permutations)}
+
+                path_parents = []
+                for part in self.PATH.parent.parts:
+                    path_parents.append(specifiers_map.get(part.lower(), part))
+
+                path_name = self.PATH.name
+                for dataset_specifier, specifier in specifiers_map.items():
+                    path_name = path_name.replace(dataset_specifier, specifier.lower())
+
+                path = Path(*path_parents) / path_name
+                datasets.append(Dataset(path))
+
+            return datasets
+        else:
+            return [dataset]
 
     @cached_property
     def PERMUTATIONS(self):
