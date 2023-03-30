@@ -16,23 +16,25 @@ class MapExtraction(CSVExtractionMixin, Extraction):
         path = self.get_path(dataset, region)
         logger.info(f'extract to {path}')
 
-        # only process the first file if TIMES is not set
-        if settings.TIMES is None and not file.first:
-            return
-
-        if region.type == 'mask':
-            ds = file.ds.where(region.mask == 1)
-        else:
-            ds = file.ds
-
         if settings.TIMES is None:
-            ds_time = ds.isel(time=slice(0, 1))
-            self.write(ds_time, path, first=True)
-        else:
-            for time_index, time in enumerate(settings.TIMES):
-                ds_time = ds.sel(time=time)
+            # get first time of the first dataset
+            times = [file.ds.time.isel(time=0).dt.strftime('%Y%m%d').data]
 
-                # the first time we write is if time_index is and the dataset
-                # is not empty (does not need to happen on the first file)
-                first = time_index == 0 and ds_time.time.size > 0
-                self.write(ds_time, path, first=first)
+            # only process the first file if TIMES was not set
+            if not file.first:
+                return
+        else:
+            times = settings.TIMES
+
+        for time_index, time in enumerate(times):
+            try:
+                ds = file.ds.sel(time=[time])
+            except KeyError:
+                # continue it the time was not found in the dataset
+                continue
+            else:
+                if region.type == 'mask':
+                    ds = ds.where(region.mask == 1)
+
+                # write if any data was found in this dataset
+                self.write(ds, path, first=(time_index == 0))

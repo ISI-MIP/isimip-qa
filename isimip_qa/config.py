@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 from itertools import product
 from pathlib import Path
 
@@ -33,9 +34,9 @@ class Settings(ISIMIPSettings):
         # create a dict to store masks
         settings.MASKS = {}
 
-        # setup time
+        # setup times
         if self.TIMES:
-            self.TIMES = sorted(self.TIMES.split(','))
+            self.TIMES = sorted([self.parse_time(time) for time in self.TIMES.split(',')])
 
         # setup specifiers
         specifiers_dict = defaultdict(list)
@@ -108,6 +109,17 @@ class Settings(ISIMIPSettings):
     def TREE(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
         return fetch_tree(self.PROTOCOL_LOCATIONS.split(), self.PATH)
+
+    def parse_time(self, time):
+        try:
+            datetime.strptime(time, '%Y-%m-%d')
+        except ValueError:
+            try:
+                datetime.strptime(time, '%Y')
+            except ValueError:
+                self.parser.error('TIMES need to provided as "%Y-%m-%d" or "%Y".')
+
+        return time
 
 
 settings = Settings()
