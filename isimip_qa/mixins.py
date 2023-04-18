@@ -39,9 +39,9 @@ class CSVExtractionMixin(object):
     def read(self, dataset, region):
         # pandas cannot handle datetimes before 1677-09-22 so we need to
         # manually set every timestamp before to None using a custom date_parser
-        def parse_timestamps(timestamp):
+        def parse_time(time):
             try:
-                return pd.Timestamp(np.datetime64(timestamp))
+                return pd.Timestamp(np.datetime64(time))
             except pd.errors.OutOfBoundsDatetime:
                 return pd.NaT
 
@@ -49,7 +49,10 @@ class CSVExtractionMixin(object):
         path = self.get_path(dataset, region)
 
         # read the dataframe from the csv
-        df = pd.read_csv(path, parse_dates=['time'], date_parser=parse_timestamps)
+        df = pd.read_csv(path)
+        df['time'] = df['time'].apply(parse_time)
+
+        # remove all values without time
         df = df[df.time.notnull()]
         df.set_index('time', inplace=True)
 
