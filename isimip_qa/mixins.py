@@ -23,11 +23,18 @@ class CSVExtractionMixin(object):
         return self.get_path(dataset, region).exists()
 
     def write(self, ds, path, first):
+        if len(ds.dims) == 3:
+            dim_order = ('lon', 'lat', 'time')
+        elif len(ds.dims) == 2:
+            dim_order = ('lon', 'lat')
+        else:
+            dim_order = ('time', )
+
         if first:
             path.parent.mkdir(exist_ok=True, parents=True)
-            ds.to_dataframe(dim_order=('lon', 'lat', 'time')).to_csv(path)
+            ds.to_dataframe(dim_order=dim_order).to_csv(path)
         else:
-            ds.to_dataframe(dim_order=('lon', 'lat', 'time')).to_csv(path, mode='a', header=False)
+            ds.to_dataframe(dim_order=dim_order).to_csv(path, mode='a', header=False)
 
     def read(self, dataset, region):
         # pandas cannot handle datetimes before 1677-09-22 so we need to

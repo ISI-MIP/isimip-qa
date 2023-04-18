@@ -18,7 +18,7 @@ class MapExtraction(CSVExtractionMixin, Extraction):
 
         if settings.TIMES is None:
             # get first time of the first dataset
-            times = [file.ds.time.isel(time=0).dt.strftime('%Y%m%d').data]
+            times = [str(file.ds.time.isel(time=0).dt.strftime('%Y-%m-%d').data)]
 
             # only process the first file if TIMES was not set
             if not file.first:
