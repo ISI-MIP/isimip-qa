@@ -54,7 +54,7 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
             df = dfs[i]
             var = df.columns[-1]
             attrs = AttrsExtraction().read(dataset, region)
-            times = settings.TIMES or [df.index[0]]
+            times = settings.TIMES or [df.index[0].strftime('%Y-%m-%d')]
 
             for time_index, time in enumerate(times):
                 df_pivot = df.loc[time].pivot(index='lat', columns=['lon'], values=var)
