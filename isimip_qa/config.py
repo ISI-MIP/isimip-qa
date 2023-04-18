@@ -20,11 +20,11 @@ class Settings(ISIMIPSettings):
 
         super().setup(parser)
         if self.DATASETS_PATH is None:
-            parser.error('no DATASETS_PATH was provided.')
+            self.DATASETS_PATH = Path.cwd()
         if self.EXTRACTIONS_PATH is None:
-            parser.error('no EXTRACTIONS_PATH was provided.')
+            self.EXTRACTIONS_PATH = Path.cwd()
         if self.ASSESSMENTS_PATH is None:
-            parser.error('no ASSESSMENTS_PATH was provided.')
+            self.ASSESSMENTS_PATH = Path.cwd()
 
         self.PATH = Path(settings.PATH).expanduser()
         self.DATASETS_PATH = Path(settings.DATASETS_PATH).expanduser()
