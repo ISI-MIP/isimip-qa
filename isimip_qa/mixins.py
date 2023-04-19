@@ -110,8 +110,8 @@ class PlotMixin(object):
 
     def get_path(self, dataset, region, **specifiers):
         specifiers['time_step'] = self.specifier
-        for identifier, specifiers in settings.SPECIFIERS.items():
-            specifiers[identifier] = ['various'] if len(specifiers) > 5 else specifiers
+        for identifier, specifier_list in settings.SPECIFIERS.items():
+            specifiers[identifier] = ['various'] if len(specifier_list) > 5 else specifier_list
 
         path = dataset.replace_name(region=region.specifier, **specifiers)
         return settings.ASSESSMENTS_PATH.joinpath(path.name)
