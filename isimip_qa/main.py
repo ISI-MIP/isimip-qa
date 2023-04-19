@@ -40,6 +40,11 @@ def main():
     parser.add_argument('--assessments-only', dest='assessments_only', action='store_true', default=False,
                         help='Run only assessments')
 
+    parser.add_argument('--ymin', type=float, dest='ymin', default=None,
+                        help='Fixed minimal y value for plots.')
+    parser.add_argument('--ymax', type=float, dest='ymax', default=None,
+                        help='Fixed maximum y value for plots.')
+
     parser.add_argument('--times', dest='times', default=None,
                         help='Time steps to use for maps (comma seperated)')
     parser.add_argument('--vmin', type=float, dest='vmin', default=None,

@@ -17,24 +17,27 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
     extractions = ['map']
 
     def plot(self, extraction, region):
-        path = self.get_path(settings.DATASETS[0], region, extraction)
+        path = self.get_path(settings.DATASETS[0], region)
 
         logger.info(f'create plot {path}')
 
         # read all dataframes to determine min/max values
-        dfs = []
+        plots = []
         for dataset in settings.DATASETS:
-            dfs.append(extraction.read(dataset, region))
+            df = extraction.read(dataset, region)
+            var = df.columns[-1]
+            attrs = AttrsExtraction().read(dataset, region)
+            plots.append((df, var, attrs))
 
         # get the extension of the valid data for all datasets
         if region.specifier == 'global':
             lonmin, lonmax, latmin, latmax = -180, 180, -90, 90
             ratio = 3
         else:
-            lonmin = min([df.where(pd.notnull(df[df.columns[-1]]))['lon'].min() for df in dfs])
-            lonmax = max([df.where(pd.notnull(df[df.columns[-1]]))['lon'].max() for df in dfs])
-            latmin = min([df.where(pd.notnull(df[df.columns[-1]]))['lat'].min() for df in dfs])
-            latmax = max([df.where(pd.notnull(df[df.columns[-1]]))['lat'].max() for df in dfs])
+            lonmin = min([df.where(pd.notnull(df[df.columns[-1]]))['lon'].min() for df, var, attrs in plots])
+            lonmax = max([df.where(pd.notnull(df[df.columns[-1]]))['lon'].max() for df, var, attrs in plots])
+            latmin = min([df.where(pd.notnull(df[df.columns[-1]]))['lat'].min() for df, var, attrs in plots])
+            latmax = max([df.where(pd.notnull(df[df.columns[-1]]))['lat'].max() for df, var, attrs in plots])
             ratio = max((lonmax - lonmin) / (latmax - latmin), 1.0)
 
         nrows, ncols = self.get_grid()
@@ -43,18 +46,14 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
         fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(4 * ratio * ncols, 4 * nrows))
         plt.subplots_adjust(top=1.1)
 
-        # get the min/max for the colorbar in "variable" space
-        vmin = min([df[df.columns[-1]].min() for df in dfs]) if settings.VMIN is None else settings.VMIN
-        vmax = max([df[df.columns[-1]].max() for df in dfs]) if settings.VMAX is None else settings.VMAX
-
-        for i, dataset in enumerate(settings.DATASETS):
+        for i, (df, var, attrs) in enumerate(plots):
             irow, icol = self.get_grid_indexes(i)
             label = self.get_label(i)
 
-            df = dfs[i]
-            var = df.columns[-1]
-            attrs = AttrsExtraction().read(dataset, region)
             times = settings.TIMES or [df.index[0].strftime('%Y-%m-%d')]
+
+            vmin = self.get_vmin(var, plots)
+            vmax = self.get_vmax(var, plots)
 
             for time_index, time in enumerate(times):
                 df_pivot = df.loc[time].pivot(index='lat', columns=['lon'], values=var)

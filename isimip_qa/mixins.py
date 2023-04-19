@@ -12,11 +12,8 @@ logger = logging.getLogger(__name__)
 
 class CSVExtractionMixin(object):
 
-    def get_path(self, dataset, region, append=None):
-        path = dataset.replace_name(region=region.specifier)
-        path = path.with_name(path.name + '_' + self.specifier)
-        if append is not None:
-            path = path.with_name(path.name + '_' + append)
+    def get_path(self, dataset, region):
+        path = dataset.replace_name(region=region.specifier, extraction=self.specifier)
         return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.csv')
 
     def exists(self, dataset, region):
@@ -107,26 +104,53 @@ class NetCdfExtractionMixin(object):
 
 class PlotMixin(object):
 
-    def get_path(self, dataset, region, extraction):
-        settings_specifiers = {}
-        for identifier, specifiers in settings.SPECIFIERS.items():
-            settings_specifiers[identifier] = ['various'] if len(specifiers) > 5 else specifiers
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ymin = self.ymax = self.vmin = self.vmax = {}
 
-        path = dataset.replace_name(region=region.specifier, **settings_specifiers)
-        path = path.with_name(path.name + '_' + extraction.specifier)
+    def get_path(self, dataset, region, **specifiers):
+        specifiers['time_step'] = self.specifier
+        for identifier, specifiers in settings.SPECIFIERS.items():
+            specifiers[identifier] = ['various'] if len(specifiers) > 5 else specifiers
+
+        path = dataset.replace_name(region=region.specifier, **specifiers)
         return settings.ASSESSMENTS_PATH.joinpath(path.name)
+
+    def get_ymin(self, var, plots):
+        if settings.YMIN is None:
+            return min([df[var].min() for df, df_var, attrs in plots if df_var == var]) * 0.99
+        else:
+            return settings.YMIN
+
+    def get_ymax(self, var, plots):
+        if settings.YMAX is None:
+            return max([df[var].max() for df, df_var, attrs in plots if df_var == var]) * 1.01
+        else:
+            return settings.YMAX
+
+    def get_vmin(self, var, plots):
+        if settings.VMIN is None:
+            return min([df[var].min() for df, df_var, attrs in plots if df_var == var])
+        else:
+            return settings.VMIN
+
+    def get_vmax(self, var, plots):
+        if settings.VMAX is None:
+            return max([df[var].max() for df, df_var, attrs in plots if df_var == var])
+        else:
+            return settings.VMAX
 
 
 class SVGPlotMixin(PlotMixin):
 
-    def get_path(self, dataset, region, extraction):
-        return super().get_path(dataset, region, extraction).with_suffix('.svg')
+    def get_path(self, dataset, region, **specifiers):
+        return super().get_path(dataset, region, **specifiers).with_suffix('.svg')
 
 
 class PNGPlotMixin(PlotMixin):
 
-    def get_path(self, dataset, region, extraction):
-        return super().get_path(dataset, region, extraction).with_suffix('.png')
+    def get_path(self, dataset, region, **specifiers):
+        return super().get_path(dataset, region, **specifiers).with_suffix('.png')
 
 
 class GridPlotMixin(object):

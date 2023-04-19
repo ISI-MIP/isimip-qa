@@ -35,9 +35,12 @@ class Dataset(object):
     def replace_name(self, **specifiers):
         name = self.path.name
         for identifier, specifiers in specifiers.items():
-            old = self.specifiers[identifier]
+            old = self.specifiers.get(identifier)
             new = '+'.join(specifiers) if isinstance(specifiers, list) else specifiers
-            name = name.replace(old.lower(), new.lower())
+            if old is not None:
+                name = name.replace(old.lower(), new.lower())
+            else:
+                name = name + '_' + new
         return self.path.parent / name
 
 
