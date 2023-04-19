@@ -19,8 +19,13 @@ class Dataset(object):
     @cached_property
     def files(self):
         path = settings.DATASETS_PATH / self.path
-        glob = path.parent.glob(f'{path.stem}*')
-        files = [File(file_path, index) for index, file_path in enumerate(sorted(glob))]
+        glob = sorted(path.parent.glob(f'{path.stem}*'))
+
+        files = []
+        for index, file_path in enumerate(glob):
+            first = (index == 0)
+            last = (index == len(glob) - 1)
+            files.append(File(file_path, index, first, last))
 
         if files:
             return files
@@ -38,13 +43,11 @@ class Dataset(object):
 
 class File(object):
 
-    def __init__(self, file_path, index):
+    def __init__(self, file_path, index, first, last):
         self.path = file_path
         self.index = index
-
-    @property
-    def first(self):
-        return self.index == 0
+        self.first = first
+        self.last = last
 
     def load(self):
         logger.info(f'load {self.path}')

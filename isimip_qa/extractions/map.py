@@ -17,18 +17,18 @@ class MapExtraction(CSVExtractionMixin, Extraction):
         logger.info(f'extract to {path}')
 
         if settings.TIMES is None:
-            # get first time of the first dataset
-            times = [str(file.ds.time.isel(time=0).dt.strftime('%Y-%m-%d').data)]
-
             # only process the first file if TIMES was not set
-            if not file.first:
+            if not file.last:
                 return
+
+            # get the last time of the last dataset
+            times = [str(file.ds.time.isel(time=-1).dt.strftime('%Y-%m-%d').data)]
         else:
             times = settings.TIMES
 
         for time_index, time in enumerate(times):
             try:
-                ds = file.ds.sel(time=[time])
+                ds = file.ds.sel(time=time)
             except KeyError:
                 # continue it the time was not found in the dataset
                 continue
