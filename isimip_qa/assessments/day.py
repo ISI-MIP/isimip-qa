@@ -49,3 +49,4 @@ class DailyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
         path.parent.mkdir(exist_ok=True, parents=True)
         fig.savefig(path, bbox_inches='tight')
+        plt.close()

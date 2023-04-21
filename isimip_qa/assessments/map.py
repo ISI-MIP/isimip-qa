@@ -76,8 +76,8 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
 
                 cbar = plt.colorbar(im, ax=ax)
                 cbar.set_label(f'{var} [{attrs.get("units")}]')
-                if (settings.VMIN and settings.VMAX):
-                    cbar.set_ticks([vmin, (vmax-vmin) * 0.5, vmax])
+                cbar.set_ticks([vmin, vmax])
 
         path.parent.mkdir(exist_ok=True, parents=True)
         fig.savefig(path, bbox_inches='tight')
+        plt.close()
