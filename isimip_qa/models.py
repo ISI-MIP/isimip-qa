@@ -2,7 +2,6 @@ import logging
 
 import xarray as xr
 
-from isimip_utils.decorators import cached_property
 from isimip_utils.patterns import match_dataset_path
 
 from .config import settings
@@ -14,21 +13,19 @@ logger = logging.getLogger(__name__)
 class Dataset(object):
 
     def __init__(self, dataset_path):
-        self.path, self.specifiers = match_dataset_path(settings.PATTERN, dataset_path)
-
-    @cached_property
-    def files(self):
-        path = settings.DATASETS_PATH / self.path
+        path = settings.DATASETS_PATH / dataset_path
         glob = sorted(path.parent.glob(f'{path.stem}*'))
 
-        files = []
+        self.files = []
         for index, file_path in enumerate(glob):
             first = (index == 0)
             last = (index == len(glob) - 1)
-            files.append(File(file_path, index, first, last))
+            self.files.append(File(file_path, index, first, last))
 
-        if files:
-            return files
+        if self.files:
+            first_file_path = self.files[0].path
+            self.path, self.specifiers = match_dataset_path(settings.PATTERN, first_file_path)
+            self.is_complete = False
         else:
             raise RuntimeError(f'No files found for {path}')
 
