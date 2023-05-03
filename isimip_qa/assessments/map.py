@@ -23,11 +23,12 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
 
         # read all dataframes to determine min/max values
         plots = []
-        for dataset in settings.DATASETS:
-            df = extraction.read(dataset, region)
-            var = df.columns[-1]
-            attrs = AttrsExtraction().read(dataset, region)
-            plots.append((df, var, attrs))
+        for index, dataset in enumerate(settings.DATASETS):
+            if dataset.path:
+                df = extraction.read(dataset, region)
+                var = df.columns[-1]
+                attrs = AttrsExtraction().read(dataset, region)
+                plots.append((index, df, var, attrs))
 
         # get the extension of the valid data for all datasets
         if region.specifier == 'global':
@@ -43,12 +44,12 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
         nrows, ncols = self.get_grid()
         ntimes = 1 if settings.TIMES is None else len(settings.TIMES)
         ncols = ncols * ntimes
-        fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(4 * ratio * ncols, 4 * nrows))
+        fig, axs = self.get_subplots(nrows, ncols, ratio=ratio)
         plt.subplots_adjust(top=1.1)
 
-        for i, (df, var, attrs) in enumerate(plots):
-            irow, icol = self.get_grid_indexes(i)
-            label = self.get_label(i)
+        for index, df, var, attrs in plots:
+            irow, icol = self.get_grid_indexes(index)
+            label = self.get_label(index)
 
             times = settings.TIMES or [df.index[0].strftime('%Y-%m-%d')]
 
@@ -69,10 +70,11 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
                                extent=[lonmin, lonmax, latmin, latmax],
                                vmin=vmin, vmax=vmax, cmap=settings.CMAP)
 
-                title = self.get_title(i)
+                title = self.get_title(index)
                 ax.set_title(f'{title} {time}' if title else time, fontsize=10)
                 ax.set_xlabel('lon', fontsize=10)
                 ax.set_ylabel('lat', fontsize=10)
+                ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
                 cbar = plt.colorbar(im, ax=ax)
                 cbar.set_label(f'{var} [{attrs.get("units")}]')

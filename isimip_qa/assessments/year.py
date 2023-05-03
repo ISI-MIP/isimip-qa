@@ -21,18 +21,19 @@ class YearlyMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
         logger.info(f'create plot {path}')
 
         plots = []
-        for dataset in settings.DATASETS:
-            df = extraction.read(dataset, region).groupby(lambda x: x.year).mean()
-            var = df.columns[0]
-            attrs = AttrsExtraction().read(dataset, region)
-            plots.append((df, var, attrs))
+        for index, dataset in enumerate(settings.DATASETS):
+            if dataset.path:
+                df = extraction.read(dataset, region).groupby(lambda x: x.year).mean()
+                var = df.columns[0]
+                attrs = AttrsExtraction().read(dataset, region)
+                plots.append((index, df, var, attrs))
 
         nrows, ncols = self.get_grid()
-        fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(6 * ncols, 6 * nrows))
+        fig, axs = self.get_subplots(nrows, ncols)
 
-        for i, (df, var, attrs) in enumerate(plots):
-            irow, icol = self.get_grid_indexes(i)
-            label = self.get_label(i)
+        for index, df, var, attrs in plots:
+            irow, icol = self.get_grid_indexes(index)
+            label = self.get_label(index)
 
             ymin = self.get_ymin(var, plots)
             ymax = self.get_ymax(var, plots)
@@ -40,10 +41,11 @@ class YearlyMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             ax = axs.item(irow, icol)
             ax.step(df.index, df[var], where='mid', label=label)
 
-            ax.set_title(self.get_title(i))
+            ax.set_title(self.get_title(index))
             ax.set_xlabel('date')
             ax.set_ylabel(f'{var} [{attrs.get("units")}]')
             ax.set_ylim(ymin, ymax)
+            ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
             if label:
                 ax.legend(loc='lower left')
 

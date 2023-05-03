@@ -17,6 +17,7 @@ class Dataset(object):
         glob = sorted(path.parent.glob(f'{path.stem}*'))
 
         self.files = []
+        self.is_complete = False
         for index, file_path in enumerate(glob):
             first = (index == 0)
             last = (index == len(glob) - 1)
@@ -25,20 +26,20 @@ class Dataset(object):
         if self.files:
             first_file_path = self.files[0].path
             self.path, self.specifiers = match_dataset_path(settings.PATTERN, first_file_path)
-            self.is_complete = False
         else:
-            raise RuntimeError(f'No files found for {path}')
+            self.path, self.specifiers = None, {}
 
     def replace_name(self, **specifiers):
-        name = self.path.name
-        for identifier, specifiers in specifiers.items():
-            old = self.specifiers.get(identifier)
-            new = '+'.join(specifiers) if isinstance(specifiers, list) else specifiers
-            if old is not None:
-                name = name.replace(old.lower(), new.lower())
-            else:
-                name = name + '_' + new
-        return self.path.parent / name
+        if self.path:
+            name = self.path.name
+            for identifier, specifiers in specifiers.items():
+                old = self.specifiers.get(identifier)
+                new = '+'.join(specifiers) if isinstance(specifiers, list) else specifiers
+                if old is not None:
+                    name = name.replace(old.lower(), new.lower())
+                else:
+                    name = name + '_' + new
+            return self.path.parent / name
 
 
 class File(object):

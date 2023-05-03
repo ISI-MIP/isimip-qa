@@ -1,7 +1,9 @@
+import itertools
 import json
 import logging
 
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 import xarray as xr
 
@@ -118,25 +120,25 @@ class PlotMixin(object):
 
     def get_ymin(self, var, plots):
         if settings.YMIN is None:
-            return min([df[var].min() for df, df_var, attrs in plots if df_var == var]) * 0.99
+            return min([df[var].min() for index, df, df_var, attrs in plots if df_var == var]) * 0.99
         else:
             return settings.YMIN
 
     def get_ymax(self, var, plots):
         if settings.YMAX is None:
-            return max([df[var].max() for df, df_var, attrs in plots if df_var == var]) * 1.01
+            return max([df[var].max() for index, df, df_var, attrs in plots if df_var == var]) * 1.01
         else:
             return settings.YMAX
 
     def get_vmin(self, var, plots):
         if settings.VMIN is None:
-            return min([df[var].min() for df, df_var, attrs in plots if df_var == var])
+            return min([df[var].min() for index, df, df_var, attrs in plots if df_var == var])
         else:
             return settings.VMIN
 
     def get_vmax(self, var, plots):
         if settings.VMAX is None:
-            return max([df[var].max() for df, df_var, attrs in plots if df_var == var])
+            return max([df[var].max() for index, df, df_var, attrs in plots if df_var == var])
         else:
             return settings.VMAX
 
@@ -154,6 +156,12 @@ class PNGPlotMixin(PlotMixin):
 
 
 class GridPlotMixin(object):
+
+    def get_subplots(self, nrows, ncols, ratio=1):
+        fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(6 * ratio * ncols, 6 * nrows))
+        for ax in itertools.chain.from_iterable(axs):
+            ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
+        return fig, axs
 
     def get_grid(self):
         g = [1, 1]

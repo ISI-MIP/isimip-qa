@@ -69,16 +69,17 @@ def main():
         # check if the extractions are already complete
         if not settings.FORCE:
             for dataset in settings.DATASETS:
-                dataset.is_complete = True
-                for extraction in settings.EXTRACTIONS:
-                    for region in settings.REGIONS:
-                        if extraction.region_types is None \
-                                    or region.type in extraction.region_types:
-                            dataset.is_complete &= extraction.exists(dataset, region)
+                if dataset.path:
+                    dataset.is_complete = True
+                    for extraction in settings.EXTRACTIONS:
+                        for region in settings.REGIONS:
+                            if extraction.region_types is None \
+                                        or region.type in extraction.region_types:
+                                dataset.is_complete &= extraction.exists(dataset, region)
 
         # if the extractions were not complete, run the extractions
         for dataset in settings.DATASETS:
-            if not dataset.is_complete:
+            if dataset.path and not dataset.is_complete:
                 for file in dataset.files:
                     file.load()
                     for extraction in settings.EXTRACTIONS:
