@@ -26,9 +26,6 @@ class Dataset(object):
             last = (index == len(glob) - 1)
             self.files.append(File(file_path, index, first, last))
 
-        # init is_complete flag
-        self.is_complete = False
-
     def replace_name(self, **specifiers):
         if self.path:
             name = self.path.name
