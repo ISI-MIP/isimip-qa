@@ -16,15 +16,18 @@ class Dataset(object):
         path = settings.DATASETS_PATH / dataset_path
         glob = sorted(path.parent.glob(f'{path.stem}*'))
 
-        # match dataset path with protocol pattern
-        self.path, self.specifiers = match_dataset_path(settings.PATTERN, path)
-
         # find files for dataset
         self.files = []
         for index, file_path in enumerate(glob):
             first = (index == 0)
             last = (index == len(glob) - 1)
             self.files.append(File(file_path, index, first, last))
+
+        if self.files:
+            first_file_path = self.files[0].path
+            self.path, self.specifiers = match_dataset_path(settings.PATTERN, first_file_path)
+        else:
+            self.path, self.specifiers = None, {}
 
     def replace_name(self, **specifiers):
         if self.path:

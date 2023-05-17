@@ -16,7 +16,7 @@ class Settings(ISIMIPSettings):
         from .assessments import assessment_classes
         from .extractions import extraction_classes
         from .regions import regions
-        from .models import Region
+        from .models import Dataset, Region
 
         super().setup(parser)
         if self.DATASETS_PATH is None:
@@ -30,6 +30,10 @@ class Settings(ISIMIPSettings):
         self.DATASETS_PATH = Path(settings.DATASETS_PATH).expanduser()
         self.EXTRACTIONS_PATH = Path(settings.EXTRACTIONS_PATH).expanduser()
         self.ASSESSMENTS_PATH = Path(settings.ASSESSMENTS_PATH).expanduser()
+
+        self.DATASET = Dataset(self.PATH)
+        if self.DATASET.path is None:
+            self.parser.error('PATH need to point to an existing datset.')
 
         # create a dict to store masks
         settings.MASKS = {}
@@ -78,13 +82,11 @@ class Settings(ISIMIPSettings):
     def DATASETS(self):
         from .models import Dataset
 
-        dataset = Dataset(self.PATH)
-
         if self.SPECIFIERS:
             datasets = []
 
             for permutations in self.PERMUTATIONS:
-                specifiers_map = {dataset.specifiers[key]: value for key, value in zip(self.SPECIFIERS.keys(), permutations)}
+                specifiers_map = {self.DATASET.specifiers[key]: value for key, value in zip(self.SPECIFIERS.keys(), permutations)}
 
                 path_parents = []
                 for part in self.PATH.parent.parts:
@@ -99,7 +101,7 @@ class Settings(ISIMIPSettings):
 
             return datasets
         else:
-            return [dataset]
+            return [self.DATASET]
 
     @cached_property
     def PERMUTATIONS(self):
