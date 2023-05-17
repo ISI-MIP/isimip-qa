@@ -55,7 +55,7 @@ class File(object):
             self.ds = xr.open_dataset(self.path)
 
     def unload(self):
-        self.ds = None
+        self.ds.close()
 
 
 class Region(object):
