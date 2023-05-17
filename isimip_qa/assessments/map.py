@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from ..config import settings
 from ..mixins import PNGPlotMixin, GridPlotMixin
 from ..models import Assessment
+from ..exceptions import ExtractionNotFound
 from ..extractions.attrs import AttrsExtraction
 
 logger = logging.getLogger(__name__)
@@ -24,11 +25,13 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
         # read all dataframes to determine min/max values
         plots = []
         for index, dataset in enumerate(settings.DATASETS):
-            if dataset.path:
+            try:
                 df = extraction.read(dataset, region)
                 var = df.columns[-1]
                 attrs = AttrsExtraction().read(dataset, region)
                 plots.append((index, df, var, attrs))
+            except ExtractionNotFound:
+                continue
 
         # get the extension of the valid data for all datasets
         if region.specifier == 'global':

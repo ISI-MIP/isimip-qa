@@ -5,14 +5,16 @@ import matplotlib.pyplot as plt
 from ..config import settings
 from ..mixins import SVGPlotMixin, GridPlotMixin
 from ..models import Assessment
+from ..exceptions import ExtractionNotFound
 from ..extractions.attrs import AttrsExtraction
+
 
 logger = logging.getLogger(__name__)
 
 
-class YearlyMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
+class DailyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
-    specifier = 'yearly'
+    specifier = 'daily'
     extractions = ['count', 'mean']
 
     def plot(self, extraction, region):
@@ -22,11 +24,13 @@ class YearlyMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
         plots = []
         for index, dataset in enumerate(settings.DATASETS):
-            if dataset.path:
-                df = extraction.read(dataset, region).groupby(lambda x: x.year).mean()
+            try:
+                df = extraction.read(dataset, region)
                 var = df.columns[0]
                 attrs = AttrsExtraction().read(dataset, region)
                 plots.append((index, df, var, attrs))
+            except ExtractionNotFound:
+                continue
 
         nrows, ncols = self.get_grid()
         fig, axs = self.get_subplots(nrows, ncols)
@@ -39,7 +43,7 @@ class YearlyMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             ymax = self.get_ymax(var, plots)
 
             ax = axs.item(irow, icol)
-            ax.step(df.index, df[var], where='mid', label=label)
+            ax.plot(df.index, df[var], label=label)
 
             ax.set_title(self.get_title(index))
             ax.set_xlabel('date')

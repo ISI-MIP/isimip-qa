@@ -8,6 +8,7 @@ import pandas as pd
 import xarray as xr
 
 from .config import settings
+from .exceptions import ExtractionNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,12 @@ class CSVExtractionMixin(object):
         path = self.get_path(dataset, region)
 
         # read the dataframe from the csv
-        df = pd.read_csv(path)
+        try:
+            df = pd.read_csv(path)
+        except FileNotFoundError:
+            raise ExtractionNotFound
+
+        # parse the time axis of the dataframe
         df['time'] = df['time'].apply(parse_time)
 
         # remove all values without time

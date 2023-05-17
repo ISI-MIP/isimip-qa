@@ -5,15 +5,16 @@ import matplotlib.pyplot as plt
 from ..config import settings
 from ..mixins import SVGPlotMixin, GridPlotMixin
 from ..models import Assessment
+from ..exceptions import ExtractionNotFound
 from ..extractions.attrs import AttrsExtraction
 
 logger = logging.getLogger(__name__)
 
 
-class DayOfYearMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
+class DayOfYearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
     specifier = 'dayofyear'
-    extractions = ['count', 'mean']
+    extractions = ['mean']
 
     def plot(self, extraction, region):
         path = self.get_path(settings.DATASETS[0], region, extraction=extraction.specifier)
@@ -22,11 +23,13 @@ class DayOfYearMeanAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
         plots = []
         for index, dataset in enumerate(settings.DATASETS):
-            if dataset.path:
+            try:
                 df = extraction.read(dataset, region).groupby(lambda x: x.dayofyear).mean()
                 var = df.columns[0]
                 attrs = AttrsExtraction().read(dataset, region)
                 plots.append((index, df, var, attrs))
+            except ExtractionNotFound:
+                continue
 
         nrows, ncols = self.get_grid()
         fig, axs = self.get_subplots(nrows, ncols)
