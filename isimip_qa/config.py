@@ -5,6 +5,7 @@ from pathlib import Path
 
 from isimip_utils.config import ISIMIPSettings
 from isimip_utils.decorators import cached_property
+from isimip_utils.exceptions import DidNotMatch
 from isimip_utils.fetch import (fetch_definitions, fetch_pattern,
                                 fetch_schema, fetch_tree)
 
@@ -16,7 +17,7 @@ class Settings(ISIMIPSettings):
         from .assessments import assessment_classes
         from .extractions import extraction_classes
         from .regions import regions
-        from .models import Dataset, Region
+        from .models import Region
 
         super().setup(parser)
         if self.DATASETS_PATH is None:
@@ -31,10 +32,6 @@ class Settings(ISIMIPSettings):
         self.EXTRACTIONS_PATH = Path(settings.EXTRACTIONS_PATH).expanduser()
         self.ASSESSMENTS_PATH = Path(settings.ASSESSMENTS_PATH).expanduser()
 
-        self.DATASET = Dataset(self.PATH)
-        if self.DATASET.path is None:
-            self.parser.error('PATH need to point to an existing datset.')
-
         # create a dict to store masks
         settings.MASKS = {}
 
@@ -42,13 +39,12 @@ class Settings(ISIMIPSettings):
         if self.TIMES:
             self.TIMES = sorted([self.parse_time(time) for time in self.TIMES.split(',')])
 
-        # setup specifiers
-        specifiers_dict = defaultdict(list)
-        for specifier_string in self.SPECIFIERS:
-            identifier, specifiers = specifier_string.split('=')
-            specifiers_dict[identifier] += specifiers.split(',')
-        self.SPECIFIERS = specifiers_dict
-        self.IDENTIFIERS = list(self.SPECIFIERS.keys())
+        # setup params
+        placeholders_dict = defaultdict(list)
+        for placeholders_string in self.PLACEHOLDERS:
+            placeholder, values = placeholders_string.split('=')
+            placeholders_dict[placeholder] += values.split(',')
+        self.PLACEHOLDERS = placeholders_dict
 
         # setup regions
         if self.REGIONS is None:
@@ -82,30 +78,30 @@ class Settings(ISIMIPSettings):
     def DATASETS(self):
         from .models import Dataset
 
-        if self.SPECIFIERS:
+        if self.PLACEHOLDERS:
             datasets = []
 
             for permutations in self.PERMUTATIONS:
-                specifiers_map = {self.DATASET.specifiers[key]: value for key, value in zip(self.SPECIFIERS.keys(), permutations)}
+                placeholders = {key: value for key, value in zip(self.PLACEHOLDERS.keys(), permutations)}
+                path_str = str(self.PATH).format(**placeholders)
+                path = Path(path_str)
+                path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
 
-                path_parents = []
-                for part in self.PATH.parent.parts:
-                    path_parents.append(specifiers_map.get(part.lower(), part))
-
-                path_name = self.PATH.name
-                for dataset_specifier, specifier in specifiers_map.items():
-                    path_name = path_name.replace(dataset_specifier, specifier.lower())
-
-                path = Path(*path_parents) / path_name
-                datasets.append(Dataset(path))
+                try:
+                    datasets.append(Dataset(path))
+                except DidNotMatch as e:
+                    self.parser.error(e)
 
             return datasets
         else:
-            return [self.DATASET]
+            try:
+                return [Dataset(self.PATH)]
+            except DidNotMatch as e:
+                self.parser.error(e)
 
     @cached_property
     def PERMUTATIONS(self):
-        return list(product(*self.SPECIFIERS.values()))
+        return list(product(*self.PLACEHOLDERS.values()))
 
     @cached_property
     def DEFINITIONS(self):

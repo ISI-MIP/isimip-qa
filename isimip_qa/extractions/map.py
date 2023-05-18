@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 class MapExtraction(CSVExtractionMixin, Extraction):
 
-    specifier = 'map'
+    specifier = 'slice'
     region_types = ['global', 'mask']
 
     def extract(self, dataset, region, file):

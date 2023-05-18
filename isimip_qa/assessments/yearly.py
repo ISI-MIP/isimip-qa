@@ -17,8 +17,7 @@ class YearlyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
     extractions = ['mean']
 
     def plot(self, extraction, region):
-        path = self.get_path(settings.DATASETS[0], region, extraction=extraction.specifier)
-
+        path = self.get_path(extraction, region)
         logger.info(f'create plot {path}')
 
         plots = []

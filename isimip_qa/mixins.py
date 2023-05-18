@@ -116,13 +116,22 @@ class PlotMixin(object):
         super().__init__(*args, **kwargs)
         self.ymin = self.ymax = self.vmin = self.vmax = {}
 
-    def get_path(self, dataset, region, **specifiers):
-        specifiers['time_step'] = self.specifier
-        for identifier, specifier_list in settings.SPECIFIERS.items():
-            specifiers[identifier] = ['various'] if len(specifier_list) > 5 else specifier_list
+    def get_path(self, extraction, region):
+        # apply combined placeholders to path
+        placeholders = {}
+        for placeholder, values in settings.PLACEHOLDERS.items():
+            values_string = 'various' if len(values) > 5 else '+'.join(values).lower()
+            placeholders[placeholder] = values_string
+        name = settings.PATH.name.format(**placeholders)
 
-        path = dataset.replace_name(region=region.specifier, **specifiers)
-        return settings.ASSESSMENTS_PATH.joinpath(path.name)
+        # overwrite _global_ with the region, this is not very elegant,
+        # but after a lot (!) of experiments, this is the best solution ...
+        name = name.replace('_global_', '_' + region.specifier + '_')
+
+        # add the extration and the assessment specifiers
+        name = name + '_' + extraction.specifier + '_' + self.specifier
+
+        return settings.ASSESSMENTS_PATH.joinpath(name)
 
     def get_ymin(self, var, plots):
         if settings.YMIN is None:
@@ -151,14 +160,14 @@ class PlotMixin(object):
 
 class SVGPlotMixin(PlotMixin):
 
-    def get_path(self, dataset, region, **specifiers):
-        return super().get_path(dataset, region, **specifiers).with_suffix('.svg')
+    def get_path(self, extraction, region):
+        return super().get_path(extraction, region).with_suffix('.svg')
 
 
 class PNGPlotMixin(PlotMixin):
 
-    def get_path(self, dataset, region, **specifiers):
-        return super().get_path(dataset, region, **specifiers).with_suffix('.png')
+    def get_path(self, extraction, region):
+        return super().get_path(extraction, region).with_suffix('.png')
 
 
 class GridPlotMixin(object):
@@ -174,8 +183,8 @@ class GridPlotMixin(object):
         for d, j in enumerate([1, 0]):
             if settings.GRID > j:
                 try:
-                    identifier = settings.IDENTIFIERS[j]
-                    g[d] = len(settings.SPECIFIERS[identifier])
+                    placeholder = list(settings.PLACEHOLDERS.keys())[j]
+                    g[d] = len(settings.PLACEHOLDERS[placeholder])
                 except IndexError:
                     pass
         return g
@@ -185,9 +194,9 @@ class GridPlotMixin(object):
         for d, j in enumerate([1, 0]):
             if settings.GRID > j:
                 try:
-                    identifier = settings.IDENTIFIERS[j]
-                    specifier = settings.PERMUTATIONS[i][j]
-                    gi[d] = settings.SPECIFIERS[identifier].index(specifier)
+                    placeholder = list(settings.PLACEHOLDERS.keys())[j]
+                    value = settings.PERMUTATIONS[i][j]
+                    gi[d] = settings.PLACEHOLDERS[placeholder].index(value)
                 except IndexError:
                     pass
         return gi

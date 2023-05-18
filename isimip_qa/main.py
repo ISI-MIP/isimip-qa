@@ -9,9 +9,9 @@ logger = logging.getLogger(__name__)
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('path', help='Path of the dataset to process')
-    parser.add_argument('specifiers', nargs='*',
-                        help='Specifiers in the from identifier=specifier1,specifier2,...')
+    parser.add_argument('path', help='Path of the dataset to process, can contain placeholders for specifiers, e.g. {model}')
+    parser.add_argument('placeholders', nargs='*',
+                        help='Values for the placeholders in the from placeholder=value1,value2,...')
 
     parser.add_argument('--config-file', dest='config_file',
                         help='File path of the config file')
