@@ -48,10 +48,14 @@ class File(object):
 
     def load(self):
         logger.info(f'load {self.path}')
-        if settings.LOAD:
-            self.ds = xr.load_dataset(self.path)
+
+        if settings.CHUNKS:
+            self.ds = xr.open_dataset(self.path, chunks={'time': settings.CHUNKS})
         else:
             self.ds = xr.open_dataset(self.path)
+
+        if settings.LOAD:
+            self.ds.load()
 
     def unload(self):
         self.ds.close()

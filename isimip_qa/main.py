@@ -33,6 +33,8 @@ def main():
                         help='Maximum dimensions of the plot grid [default: 2]')
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                         help='Always run extractions')
+    parser.add_argument('-c', '--chunks', type=int, dest='chunks', default=None,
+                        help='Use time chunks to work with dask')
     parser.add_argument('-l', '--load', dest='load', action='store_true', default=False,
                         help='Load NetCDF datasets completely in memory')
     parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,
