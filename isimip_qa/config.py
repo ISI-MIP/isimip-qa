@@ -74,6 +74,14 @@ class Settings(ISIMIPSettings):
                 if assessment_class.specifier in self.ASSESSMENTS.split(',')
             ]
 
+        # setup color
+        if self.PRIMARY is not None:
+            self.PRIMARY = set(self.PRIMARY.split(','))
+
+    @cached_property
+    def PERMUTATIONS(self):
+        return list(product(*self.PLACEHOLDERS.values()))
+
     @cached_property
     def DATASETS(self):
         from .models import Dataset
@@ -100,8 +108,14 @@ class Settings(ISIMIPSettings):
                 self.parser.error(e)
 
     @cached_property
-    def PERMUTATIONS(self):
-        return list(product(*self.PLACEHOLDERS.values()))
+    def PRIMARY_DATASETS(self):
+        if self.PRIMARY is None:
+            return self.DATASETS
+        else:
+            return [
+                self.DATASETS[index] for index, permutation in enumerate(self.PERMUTATIONS)
+                if set(permutation).intersection(self.PRIMARY)
+            ]
 
     @cached_property
     def DEFINITIONS(self):

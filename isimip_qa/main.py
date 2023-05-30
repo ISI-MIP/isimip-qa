@@ -31,6 +31,8 @@ def main():
                         help='extract only specific regions (comma seperated)')
     parser.add_argument('-g', '--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
                         help='Maximum dimensions of the plot grid [default: 2]')
+    parser.add_argument('-p', '--primary', dest='primary', default=None,
+                        help='Treat these placeholders as primary and plot them in color [default: all]')
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                         help='Always run extractions')
     parser.add_argument('-d', '--dask', dest='dask', action='store_true', default=False,

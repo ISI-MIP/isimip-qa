@@ -25,6 +25,10 @@ class Dataset(object):
             last = (index == len(glob) - 1)
             self.files.append(File(file_path, index, first, last))
 
+    @property
+    def primary(self):
+        return self in settings.PRIMARY_DATASETS
+
     def replace_name(self, **specifiers):
         if self.path:
             name = self.path.name

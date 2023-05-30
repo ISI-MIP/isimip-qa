@@ -135,25 +135,25 @@ class PlotMixin(object):
 
     def get_ymin(self, var, plots):
         if settings.YMIN is None:
-            return min([df[var].min() for index, df, df_var, attrs in plots if df_var == var]) * 0.99
+            return min([plot[1][var].min() for plot in plots if plot[2] == var]) * 0.99
         else:
             return settings.YMIN
 
     def get_ymax(self, var, plots):
         if settings.YMAX is None:
-            return max([df[var].max() for index, df, df_var, attrs in plots if df_var == var]) * 1.01
+            return max([plot[1][var].max() for plot in plots if plot[2] == var]) * 1.01
         else:
             return settings.YMAX
 
     def get_vmin(self, var, plots):
         if settings.VMIN is None:
-            return min([df[var].min() for index, df, df_var, attrs in plots if df_var == var])
+            return min([plot[1][var].min() for plot in plots if plot[2] == var])
         else:
             return settings.VMIN
 
     def get_vmax(self, var, plots):
         if settings.VMAX is None:
-            return max([df[var].max() for index, df, df_var, attrs in plots if df_var == var])
+            return max([plot[1][var].max() for plot in plots if plot[2] == var])
         else:
             return settings.VMAX
 

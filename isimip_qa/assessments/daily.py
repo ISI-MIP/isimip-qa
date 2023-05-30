@@ -27,14 +27,14 @@ class DailyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
                 df = extraction.read(dataset, region)
                 var = df.columns[0]
                 attrs = AttrsExtraction().read(dataset, region)
-                plots.append((index, df, var, attrs))
+                plots.append((index, df, var, attrs, dataset.primary))
             except ExtractionNotFound:
                 continue
 
         nrows, ncols = self.get_grid()
         fig, axs = self.get_subplots(nrows, ncols)
 
-        for index, df, var, attrs in plots:
+        for index, df, var, attrs, primary in plots:
             irow, icol = self.get_grid_indexes(index)
             label = self.get_label(index)
 
@@ -42,15 +42,18 @@ class DailyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             ymax = self.get_ymax(var, plots)
 
             ax = axs.item(irow, icol)
-            ax.plot(df.index, df[var], label=label)
+
+            if primary:
+                ax.plot(df.index, df[var], label=label, zorder=10)
+                ax.legend(loc='lower left')
+            else:
+                ax.plot(df.index, df[var], color='grey', zorder=0)
 
             ax.set_title(self.get_title(index))
             ax.set_xlabel('date')
             ax.set_ylabel(f'{var} [{attrs.get("units")}]')
             ax.set_ylim(ymin, ymax)
             ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
-            if label:
-                ax.legend(loc='lower left')
 
         path.parent.mkdir(exist_ok=True, parents=True)
         fig.savefig(path, bbox_inches='tight')
