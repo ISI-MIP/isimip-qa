@@ -104,13 +104,13 @@ All other command line options can be set in the config file as well.
 Datasets can be parametrized by the sytax:
 
 ```
-isimip-qc path/to/dataset <identifier>=<specifier1>,<specifier2>,...
+isimip-qc path/to/dataset_with_{placeholder}.nc palceholder=value1,value2,...
 ```
 
 E.g.
 
 ```
-ISIMIP3b/OutputData/water_global/CWatM/gfdl-esm4/historical/cwatm_gfdl-esm4_w5e5_historical_histsoc_default_qtot_global_daily model=CWatM,H08
+ISIMIP3b/OutputData/water_global/{model}/gfdl-esm4/historical/{model}_gfdl-esm4_w5e5_historical_histsoc_default_qtot_global_daily model=CWatM,H08
 ```
 
 would process
