@@ -44,7 +44,8 @@ class MonthOfYearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
             if primary:
                 ax.step(df.index, df[var], where='mid', label=label, zorder=10)
-                ax.legend(loc='lower left')
+                if label:
+                    ax.legend(loc='lower left')
             else:
                 ax.step(df.index, df[var], where='mid', color='grey', zorder=0)
 

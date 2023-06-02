@@ -44,7 +44,8 @@ class DayOfYearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
             if primary:
                 ax.scatter(df.index, df[var], s=10, marker='.', label=label, zorder=10)
-                ax.legend(loc='lower left')
+                if label:
+                    ax.legend(loc='lower left')
             else:
                 ax.scatter(df.index, df[var], s=10, marker='.', color='grey', zorder=0)
 

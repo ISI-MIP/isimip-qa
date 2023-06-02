@@ -45,7 +45,8 @@ class DailyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
             if primary:
                 ax.plot(df.index, df[var], label=label, zorder=10)
-                ax.legend(loc='lower left')
+                if label:
+                    ax.legend(loc='lower left')
             else:
                 ax.plot(df.index, df[var], color='grey', zorder=0)
 
