@@ -27,7 +27,7 @@ class Dataset(object):
 
     @property
     def primary(self):
-        return self in settings.PRIMARY_DATASETS
+        return not settings.PRIMARY or self in settings.PRIMARY_DATASETS
 
     def replace_name(self, **specifiers):
         if self.path:

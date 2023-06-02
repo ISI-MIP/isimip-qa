@@ -75,7 +75,9 @@ class Settings(ISIMIPSettings):
             ]
 
         # setup color
-        if self.PRIMARY is not None:
+        if self.PRIMARY is None:
+            self.PRIMARY = []
+        else:
             self.PRIMARY = set(self.PRIMARY.split(','))
 
     @cached_property
@@ -116,6 +118,23 @@ class Settings(ISIMIPSettings):
                 self.DATASETS[index] for index, permutation in enumerate(self.PERMUTATIONS)
                 if set(permutation).intersection(self.PRIMARY)
             ]
+
+    @cached_property
+    def ASSESSMENTS_NAME(self):
+        # apply combined placeholders to path
+        placeholders = {}
+        for placeholder, values in settings.PLACEHOLDERS.items():
+            primary_values = [value for value in values if value in settings.PRIMARY]
+            if primary_values:
+                values_strings = primary_values
+            elif len(values) < 10:
+                values_strings = values
+            else:
+                values_strings = ['various']
+
+            placeholders[placeholder] = '+'.join(values_strings).lower()
+
+        return settings.PATH.name.format(**placeholders)
 
     @cached_property
     def DEFINITIONS(self):

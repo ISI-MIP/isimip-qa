@@ -117,12 +117,8 @@ class PlotMixin(object):
         self.ymin = self.ymax = self.vmin = self.vmax = {}
 
     def get_path(self, extraction, region):
-        # apply combined placeholders to path
-        placeholders = {}
-        for placeholder, values in settings.PLACEHOLDERS.items():
-            values_string = 'various' if len(values) > 5 else '+'.join(values).lower()
-            placeholders[placeholder] = values_string
-        name = settings.PATH.name.format(**placeholders)
+        # the assessments name is computed in the config
+        name = settings.ASSESSMENTS_NAME
 
         # overwrite _global_ with the region, this is not very elegant,
         # but after a lot (!) of experiments, this is the best solution ...
