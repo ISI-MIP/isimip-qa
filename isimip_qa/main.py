@@ -1,20 +1,18 @@
-import argparse
 import logging
+
+from isimip_utils.parser import ArgumentParser
 
 from .config import settings
 
 logger = logging.getLogger(__name__)
 
 
-def main():
-    parser = argparse.ArgumentParser()
+def get_parser():
+    parser = ArgumentParser()
 
     parser.add_argument('path', help='Path of the dataset to process, can contain placeholders for specifiers, e.g. {model}')
     parser.add_argument('placeholders', nargs='*',
                         help='Values for the placeholders in the from placeholder=value1,value2,...')
-
-    parser.add_argument('--config-file', dest='config_file',
-                        help='File path of the config file')
 
     parser.add_argument('--datasets-path', dest='datasets_path',
                         help='base path for the input datasets')
@@ -27,7 +25,7 @@ def main():
                         help='Run only specific extractions (comma seperated)')
     parser.add_argument('-a', '--assessments', dest='assessments', default=None,
                         help='Run only specific assessments (comma seperated)')
-    parser.add_argument('-r', '--regions', dest='regions', default=None,
+    parser.add_argument('-r', '--regions', dest='regions', default='global',
                         help='extract only specific regions (comma seperated)')
     parser.add_argument('-g', '--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
                         help='Maximum dimensions of the plot grid [default: 2]')
@@ -66,7 +64,21 @@ def main():
     parser.add_argument('--log-file', dest='log_file',
                         help='Path to the log file')
 
-    settings.setup(parser)
+    return parser
+
+
+def init_settings(**kwargs):
+    parser = get_parser()
+    args = parser.get_defaults()
+    args.update(kwargs)
+    settings.setup(args)
+    return settings
+
+
+def main():
+    parser = get_parser()
+    args = vars(parser.parse_args())
+    settings.setup(args)
 
     # run the extractions
     if not settings.ASSESSMENTS_ONLY:
