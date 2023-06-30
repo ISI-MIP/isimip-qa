@@ -1,9 +1,11 @@
 import itertools
 import json
 import logging
+from itertools import product
+from pathlib import Path
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import xarray as xr
 
@@ -113,21 +115,22 @@ class NetCdfExtractionMixin(object):
 class PlotMixin(object):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        self.name = kwargs.pop('name', None)
         self.ymin = self.ymax = self.vmin = self.vmax = {}
+        super().__init__(*args, **kwargs)
 
     def get_path(self, extraction, region):
-        # the assessments name is computed in the config
-        name = settings.ASSESSMENTS_NAME
+        if self.name:
+            name = self.name
 
-        # overwrite _global_ with the region, this is not very elegant,
-        # but after a lot (!) of experiments, this is the best solution ...
-        name = name.replace('_global_', '_' + region.specifier + '_')
+            # overwrite _global_ with the region, this is not very elegant,
+            # but after a lot (!) of experiments, this is the best solution ...
+            name = name.replace('_global_', '_' + region.specifier + '_')
 
-        # add the extration and the assessment specifiers
-        name = name + '_' + extraction.specifier + '_' + self.specifier
+            # add the extration and the assessment specifiers
+            name = name + '_' + extraction.specifier + '_' + self.specifier
 
-        return settings.ASSESSMENTS_PATH.joinpath(name)
+            return settings.ASSESSMENTS_PATH / name
 
     def get_ymin(self, var, plots):
         if settings.YMIN is None:
@@ -157,16 +160,28 @@ class PlotMixin(object):
 class SVGPlotMixin(PlotMixin):
 
     def get_path(self, extraction, region):
-        return super().get_path(extraction, region).with_suffix('.svg')
+        path = super().get_path(extraction, region)
+        if path:
+            return path.with_suffix('.svg')
 
 
 class PNGPlotMixin(PlotMixin):
 
     def get_path(self, extraction, region):
-        return super().get_path(extraction, region).with_suffix('.png')
+        path = super().get_path(extraction, region)
+        if path:
+            return path.with_suffix('.png')
 
 
 class GridPlotMixin(object):
+
+    def __init__(self, *args, **kwargs):
+        self.dimensions = kwargs.pop('dimensions', None)
+        self.grid = kwargs.pop('grid', 2)
+        if self.dimensions:
+            self.keys = list(self.dimensions.keys())
+            self.permutations = list(product(*self.dimensions.values()))
+        super().__init__(*args, **kwargs)
 
     def get_subplots(self, nrows, ncols, ratio=1):
         fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(6 * ratio * ncols, 6 * nrows))
@@ -175,37 +190,41 @@ class GridPlotMixin(object):
         return fig, axs
 
     def get_grid(self):
-        g = [1, 1]
-        for d, j in enumerate([1, 0]):
-            if settings.GRID > j:
-                try:
-                    placeholder = list(settings.PLACEHOLDERS.keys())[j]
-                    g[d] = len(settings.PLACEHOLDERS[placeholder])
-                except IndexError:
-                    pass
-        return g
+        grid = [1, 1]
+        if self.dimensions:
+            for d, j in enumerate([1, 0]):
+                if self.grid > j:
+                    try:
+                        key = self.keys[j]
+                        grid[d] = len(self.dimensions[key])
+                    except IndexError:
+                        pass
+        return grid
 
     def get_grid_indexes(self, i):
-        gi = [0, 0]
-        for d, j in enumerate([1, 0]):
-            if settings.GRID > j:
-                try:
-                    placeholder = list(settings.PLACEHOLDERS.keys())[j]
-                    value = settings.PERMUTATIONS[i][j]
-                    gi[d] = settings.PLACEHOLDERS[placeholder].index(value)
-                except IndexError:
-                    pass
-        return gi
+        grid_indexes = [0, 0]
+        if self.dimensions:
+            for d, j in enumerate([1, 0]):
+                if self.grid > j:
+                    try:
+                        key = self.keys[j]
+                        value = self.permutations[i][j]
+                        grid_indexes[d] = self.dimensions[key].index(value)
+                    except IndexError:
+                        pass
+        return grid_indexes
 
     def get_title(self, i):
-        t = []
-        for j in [1, 0]:
-            if settings.GRID > j:
-                try:
-                    t.append(settings.PERMUTATIONS[i][j])
-                except IndexError:
-                    pass
-        return ' '.join(t)
+        if self.dimensions:
+            t = []
+            for j in [1, 0]:
+                if self.grid > j:
+                    try:
+                        t.append(self.permutations[i][j])
+                    except IndexError:
+                        pass
+            return ' '.join(t)
 
     def get_label(self, i):
-        return ' '.join(settings.PERMUTATIONS[i][settings.GRID:])
+        if self.dimensions:
+            return ' '.join(self.permutations[i][self.grid:])

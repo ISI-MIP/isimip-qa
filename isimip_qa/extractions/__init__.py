@@ -1,5 +1,5 @@
-import inspect
 import importlib
+import inspect
 import os
 from pathlib import Path
 
@@ -19,3 +19,4 @@ for root, dirs, files in os.walk(path):
             for module_class_name, module_class in inspect.getmembers(module, inspect.isclass):
                 if module_class != Extraction and issubclass(module_class, Extraction):
                     extraction_classes.add(module_class)
+                    globals()[module_class_name] = module_class

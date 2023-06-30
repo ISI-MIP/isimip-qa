@@ -2,11 +2,10 @@ import logging
 
 import matplotlib.pyplot as plt
 
-from ..config import settings
-from ..mixins import SVGPlotMixin, GridPlotMixin
-from ..models import Assessment
 from ..exceptions import ExtractionNotFound
 from ..extractions.attrs import AttrsExtraction
+from ..mixins import GridPlotMixin, SVGPlotMixin
+from ..models import Assessment
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +17,13 @@ class DayOfYearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
 
     def plot(self, extraction, region):
         path = self.get_path(extraction, region)
-        logger.info(f'create plot {path}')
+        logger.info(f'create plot {path}' if path else f'create plot {extraction.specifier} {region.specifier}')
 
         plots = []
-        for index, dataset in enumerate(settings.DATASETS):
+        for index, dataset in enumerate(self.datasets):
             try:
                 df = extraction.read(dataset, region).groupby(lambda x: x.dayofyear).mean()
-                var = df.columns[0]
+                var = df.columns[-1]
                 attrs = AttrsExtraction().read(dataset, region)
                 plots.append((index, df, var, attrs, dataset.primary))
             except ExtractionNotFound:
@@ -55,6 +54,7 @@ class DayOfYearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             ax.set_ylim(ymin, ymax)
             ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
-        path.parent.mkdir(exist_ok=True, parents=True)
-        fig.savefig(path, bbox_inches='tight')
-        plt.close()
+        if path:
+            path.parent.mkdir(exist_ok=True, parents=True)
+            fig.savefig(path, bbox_inches='tight')
+            plt.close()

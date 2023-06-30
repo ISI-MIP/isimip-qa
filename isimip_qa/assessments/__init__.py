@@ -19,3 +19,4 @@ for root, dirs, files in os.walk(path):
             for module_class_name, module_class in inspect.getmembers(module, inspect.isclass):
                 if module_class != Assessment and issubclass(module_class, Assessment):
                     assessment_classes.add(module_class)
+                    globals()[module_class_name] = module_class
