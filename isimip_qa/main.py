@@ -7,7 +7,7 @@ from .assessments import assessment_classes
 from .config import settings
 from .extractions import extraction_classes
 from .models import Dataset, Region
-from .regions import regions
+from .regions import regions_list
 
 logger = logging.getLogger(__name__)
 
@@ -97,8 +97,8 @@ def main():
 
     # create list of regions
     regions = [
-        Region(**region) for region in regions
-        if region.get('specifier') in settings.REGIONS
+        Region(**region) for region in regions_list
+        if region['specifier'] in settings.REGIONS
     ]
 
     # create list of extractions

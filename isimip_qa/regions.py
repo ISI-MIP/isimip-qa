@@ -1,4 +1,4 @@
-regions = [
+regions_list = [
     {
         'type': 'global',
         'specifier': 'global'
@@ -12,7 +12,7 @@ points = [
 ]
 
 for specifier, lat, lon in points:
-    regions.append({
+    regions_list.append({
         'type': 'point',
         'specifier': specifier,
         'lon': lat,
@@ -46,7 +46,7 @@ countries = [
 ]
 
 for code in countries:
-    regions.append({
+    regions_list.append({
         'type': 'mask',
         'specifier': code.lower(),
         'mask_path': countrymask_path,

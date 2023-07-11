@@ -7,7 +7,7 @@ from ..models import Extraction
 
 path = Path(__file__).parent
 
-# gather assessment classes from the python files in this directory
+# gather extraction classes from the python files in this directory
 extraction_classes = set()
 for root, dirs, files in os.walk(path):
     for file_name in sorted(files):
