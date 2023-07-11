@@ -29,10 +29,10 @@ python -m venv env
 call env\Scripts\activate.bat
 
 # install directly from GitHub
-pip install git+https://github.com/ISI-MIP/isimip-qa@dev
+pip install git+https://github.com/ISI-MIP/isimip-qa
 
 # update from Github
-pip install --upgrade git+https://github.com/ISI-MIP/isimip-qa@dev
+pip install --upgrade git+https://github.com/ISI-MIP/isimip-qa
 ```
 
 Usage
@@ -41,22 +41,21 @@ Usage
 The tool has several options which can be inspected using the help option `-h, --help`:
 
 ```bash
-usage: isimip-qa [-h] [--config-file CONFIG_FILE] [--datasets-path DATASETS_PATH]
-                 [--extractions-path EXTRACTIONS_PATH] [--assessments-path ASSESSMENTS_PATH]
-                 [-e EXTRACTIONS] [-a ASSESSMENTS] [-r REGIONS] [-g {0,1,2}] [-f] [-l]
-                 [--extractions-only] [--assessments-only] [--times TIMES] [--vmin VMIN]
+usage: isimip-qa [-h] [--datasets-path DATASETS_PATH] [--extractions-path EXTRACTIONS_PATH]
+                 [--assessments-path ASSESSMENTS_PATH] [-e EXTRACTIONS] [-a ASSESSMENTS]
+                 [-r REGIONS] [-g {0,1,2}] [-p PRIMARY] [-f] [-d] [-l] [--extractions-only]
+                 [--assessments-only] [--ymin YMIN] [--ymax YMAX] [--times TIMES] [--vmin VMIN]
                  [--vmax VMAX] [--cmap CMAP] [--protocol-location PROTOCOL_LOCATIONS]
                  [--log-level LOG_LEVEL] [--log-file LOG_FILE]
-                 path [specifiers ...]
+                 path [placeholders ...]
 
 positional arguments:
-  path                  Path of the dataset to process
-  specifiers            Specifiers in the from identifier=specifier1,specifier2,...
+  path                  Path of the dataset to process, can contain placeholders for specifiers,
+                        e.g. {model}
+  placeholders          Values for the placeholders in the from placeholder=value1,value2,...
 
 optional arguments:
   -h, --help            show this help message and exit
-  --config-file CONFIG_FILE
-                        File path of the config file
   --datasets-path DATASETS_PATH
                         base path for the input datasets
   --extractions-path EXTRACTIONS_PATH
@@ -71,10 +70,15 @@ optional arguments:
                         extract only specific regions (comma seperated)
   -g {0,1,2}, --grid {0,1,2}
                         Maximum dimensions of the plot grid [default: 2]
+  -p PRIMARY, --primary PRIMARY
+                        Treat these placeholders as primary and plot them in color [default: all]
   -f, --force           Always run extractions
+  -d, --dask            Use dask to work on time chunks
   -l, --load            Load NetCDF datasets completely in memory
   --extractions-only    Run only assessments
   --assessments-only    Run only assessments
+  --ymin YMIN           Fixed minimal y value for plots.
+  --ymax YMAX           Fixed maximum y value for plots.
   --times TIMES         Time steps to use for maps (comma seperated)
   --vmin VMIN           Fixed minimal colormap value for maps.
   --vmax VMAX           Fixed maximum colormap value for maps.
@@ -121,3 +125,33 @@ ISIMIP3b/OutputData/water_global/H08/gfdl-esm4/historical/h08_gfdl-esm4_w5e5_his
 ```
 
 Multiple identifier/specifier combinations can be used to create a grid of combinations.
+
+
+Scripts/Notebooks
+-----------------
+
+The different functions of the tool can also be used in Python scripts or Jupyter Notebooks. Before any functions are called,
+the global settings object needs to be initialized, e.g.:
+
+```python
+from isimip_qa.main import init_settings
+
+settings = init_settings(
+    protocol_path='ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/',
+    datasets_path='~/data/isimip/qa/datasets',
+    extractions_path='~/data/isimip/qa/extractions',
+    assessments_path='~/data/isimip/qa/assessments'
+)
+```
+
+Alternatively the location of a config file can be given:
+
+```python
+from isimip_qa.main import init_settings
+
+settings = init_settings(
+    config_file='path/to/config/file'
+)
+```
+
+Examples on how to use the tool in a script are given in the [notebooks](notebooks) folder.
