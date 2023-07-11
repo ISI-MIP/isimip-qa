@@ -130,8 +130,7 @@ Multiple identifier/specifier combinations can be used to create a grid of combi
 Scripts/Notebooks
 -----------------
 
-The different functions of the tool can also be used in Python scripts or Jupyter Notebooks. Before any functions are called,
-the global settings object needs to be initialized, e.g.:
+The different functions of the tool can also be used in Python scripts or Jupyter Notebooks. Before any functions are called, the global settings object needs to be initialized, e.g.:
 
 ```python
 from isimip_qa.main import init_settings
