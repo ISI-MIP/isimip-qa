@@ -1,5 +1,5 @@
-import inspect
 import importlib
+import inspect
 import os
 from pathlib import Path
 
@@ -7,7 +7,7 @@ from ..models import Extraction
 
 path = Path(__file__).parent
 
-# gather assessment classes from the python files in this directory
+# gather extraction classes from the python files in this directory
 extraction_classes = set()
 for root, dirs, files in os.walk(path):
     for file_name in sorted(files):
@@ -19,3 +19,4 @@ for root, dirs, files in os.walk(path):
             for module_class_name, module_class in inspect.getmembers(module, inspect.isclass):
                 if module_class != Extraction and issubclass(module_class, Extraction):
                     extraction_classes.add(module_class)
+                    globals()[module_class_name] = module_class

@@ -3,158 +3,121 @@ from datetime import datetime
 from itertools import product
 from pathlib import Path
 
-from isimip_utils.config import ISIMIPSettings
+from isimip_utils.config import Settings as BaseSettings
 from isimip_utils.decorators import cached_property
-from isimip_utils.exceptions import DidNotMatch
-from isimip_utils.fetch import (fetch_definitions, fetch_pattern,
-                                fetch_schema, fetch_tree)
+from isimip_utils.fetch import (fetch_definitions, fetch_pattern, fetch_schema,
+                                fetch_tree)
 
 
-class Settings(ISIMIPSettings):
+class Settings(BaseSettings):
 
-    def setup(self, parser):
-        # import here to prevent circular inclusion
-        from .assessments import assessment_classes
-        from .extractions import extraction_classes
-        from .regions import regions
-        from .models import Region
-
-        super().setup(parser)
-        if self.DATASETS_PATH is None:
-            self.DATASETS_PATH = Path.cwd()
-        if self.EXTRACTIONS_PATH is None:
-            self.EXTRACTIONS_PATH = Path.cwd()
-        if self.ASSESSMENTS_PATH is None:
-            self.ASSESSMENTS_PATH = Path.cwd()
-
-        self.PATH = Path(settings.PATH).expanduser()
-        self.DATASETS_PATH = Path(settings.DATASETS_PATH).expanduser()
-        self.EXTRACTIONS_PATH = Path(settings.EXTRACTIONS_PATH).expanduser()
-        self.ASSESSMENTS_PATH = Path(settings.ASSESSMENTS_PATH).expanduser()
+    def setup(self, args):
+        super().setup(args)
 
         # create a dict to store masks
-        settings.MASKS = {}
-
-        # setup times
-        if self.TIMES:
-            self.TIMES = sorted([self.parse_time(time) for time in self.TIMES.split(',')])
-
-        # setup params
-        placeholders_dict = defaultdict(list)
-        for placeholders_string in self.PLACEHOLDERS:
-            placeholder, values = placeholders_string.split('=')
-            placeholders_dict[placeholder] += values.split(',')
-        self.PLACEHOLDERS = placeholders_dict
-
-        # setup regions
-        if self.REGIONS is None:
-            self.REGIONS = 'global'
-        self.REGIONS = [
-            Region(region) for region in regions
-            if region.get('specifier') in (
-                self.REGIONS.split(',') if (self.REGIONS is not None) else ['global']
-            )
-        ]
-
-        # setup extractions
-        if self.EXTRACTIONS is None:
-            self.EXTRACTIONS = [extraction_class() for extraction_class in extraction_classes]
-        else:
-            self.EXTRACTIONS = [
-                extraction_class() for extraction_class in extraction_classes
-                if extraction_class.specifier in self.EXTRACTIONS.split(',')
-            ]
-
-        # setup assessments
-        if self.ASSESSMENTS is None:
-            self.ASSESSMENTS = [assessment_class() for assessment_class in assessment_classes]
-        else:
-            self.ASSESSMENTS = [
-                assessment_class() for assessment_class in assessment_classes
-                if assessment_class.specifier in self.ASSESSMENTS.split(',')
-            ]
-
-        # setup color
-        if self.PRIMARY is None:
-            self.PRIMARY = []
-        else:
-            self.PRIMARY = set(self.PRIMARY.split(','))
+        self.MASKS = {}
 
     @cached_property
-    def PERMUTATIONS(self):
-        return list(product(*self.PLACEHOLDERS.values()))
+    def PATH(self):
+        return Path(self.args['PATH']).expanduser()
+
+    @cached_property
+    def PLACEHOLDERS(self):
+        placeholders_dict = defaultdict(list)
+        for placeholders_string in self.args.get('PLACEHOLDERS'):
+            placeholder, values = placeholders_string.split('=')
+            placeholders_dict[placeholder] += values.split(',')
+        return placeholders_dict
 
     @cached_property
     def DATASETS(self):
-        from .models import Dataset
-
         if self.PLACEHOLDERS:
             datasets = []
-
-            for permutations in self.PERMUTATIONS:
+            placeholder_permutations = list(product(*self.PLACEHOLDERS.values()))
+            for permutations in placeholder_permutations:
                 placeholders = {key: value for key, value in zip(self.PLACEHOLDERS.keys(), permutations)}
                 path_str = str(self.PATH).format(**placeholders)
                 path = Path(path_str)
                 path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
-
-                try:
-                    datasets.append(Dataset(path))
-                except DidNotMatch as e:
-                    self.parser.error(e)
+                primary = bool(set(permutations).intersection(settings.PRIMARY)) if settings.PRIMARY else True
+                datasets.append((path, primary))
 
             return datasets
         else:
-            try:
-                return [Dataset(self.PATH)]
-            except DidNotMatch as e:
-                self.parser.error(e)
+            return [(self.PATH, True)]
 
     @cached_property
-    def PRIMARY_DATASETS(self):
-        if self.PRIMARY is None:
-            return self.DATASETS
-        else:
-            return [
-                self.DATASETS[index] for index, permutation in enumerate(self.PERMUTATIONS)
-                if set(permutation).intersection(self.PRIMARY)
-            ]
+    def PROTOCOL_PATH(self):
+        try:
+            return Path(self.args['PROTOCOL_PATH']).expanduser()
+        except KeyError:
+            return self.PATH
+
+    @cached_property
+    def DATASETS_PATH(self):
+        return Path(self.args['DATASETS_PATH']).expanduser()
+
+    @cached_property
+    def EXTRACTIONS_PATH(self):
+        return Path(self.args['EXTRACTIONS_PATH']).expanduser()
+
+    @cached_property
+    def ASSESSMENTS_PATH(self):
+        return Path(self.args['ASSESSMENTS_PATH']).expanduser()
 
     @cached_property
     def ASSESSMENTS_NAME(self):
-        # apply combined placeholders to path
         placeholders = {}
-        for placeholder, values in settings.PLACEHOLDERS.items():
-            primary_values = [value for value in values if value in settings.PRIMARY]
+        for placeholder, values in self.PLACEHOLDERS.items():
+            primary_values = [value for value in values if value in self.PRIMARY] if self.PRIMARY else []
             if primary_values:
                 values_strings = primary_values
             elif len(values) < 10:
                 values_strings = values
             else:
                 values_strings = ['various']
-
             placeholders[placeholder] = '+'.join(values_strings).lower()
 
-        return settings.PATH.name.format(**placeholders)
+        return self.PATH.name.format(**placeholders)
+
+    @cached_property
+    def REGIONS(self):
+        return self.args.get('REGIONS').split(',')
+
+    @cached_property
+    def EXTRACTIONS(self):
+        return self.args.get('EXTRACTIONS').split(',')
+
+    @cached_property
+    def ASSESSMENTS(self):
+        return self.args.get('ASSESSMENTS').split(',')
+
+    @cached_property
+    def PRIMARY(self):
+        return self.args.get('PRIMARY').split(',')
+
+    @cached_property
+    def TIMES(self):
+        return sorted([self.parse_time(time) for time in self.args.get('TIMES', '').split(',')])
 
     @cached_property
     def DEFINITIONS(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_definitions(self.PROTOCOL_LOCATIONS.split(), self.PATH)
+        return fetch_definitions(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
 
     @cached_property
     def PATTERN(self):
-        assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_pattern(self.PROTOCOL_LOCATIONS.split(), self.PATH)
+        return fetch_pattern(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
 
     @cached_property
     def SCHEMA(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_schema(self.PROTOCOL_LOCATIONS.split(), self.PATH)
+        return fetch_schema(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
 
     @cached_property
     def TREE(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_tree(self.PROTOCOL_LOCATIONS.split(), self.PATH)
+        return fetch_tree(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
 
     def parse_time(self, time):
         try:

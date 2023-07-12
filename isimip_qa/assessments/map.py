@@ -1,13 +1,13 @@
 import logging
 
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from ..config import settings
-from ..mixins import PNGPlotMixin, GridPlotMixin
-from ..models import Assessment
 from ..exceptions import ExtractionNotFound
 from ..extractions.attrs import AttrsExtraction
+from ..mixins import GridPlotMixin, PNGPlotMixin
+from ..models import Assessment
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +19,10 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
 
     def plot(self, extraction, region):
         path = self.get_path(extraction, region)
-        logger.info(f'create plot {path}')
+        logger.info(f'create plot {path}' if path else f'create plot {extraction.specifier} {region.specifier}')
 
-        # read all dataframes to determine min/max values
         plots = []
-        for index, dataset in enumerate(settings.DATASETS):
+        for index, dataset in enumerate(self.datasets):
             try:
                 df = extraction.read(dataset, region)
                 var = df.columns[-1]
@@ -83,7 +82,7 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
                     cbar.set_label(f'{var} [{attrs.get("units")}]')
                     cbar.set_ticks([vmin, vmax])
                     cbars.append(ax)
-
-        path.parent.mkdir(exist_ok=True, parents=True)
-        fig.savefig(path, bbox_inches='tight')
-        plt.close()
+        if path:
+            path.parent.mkdir(exist_ok=True, parents=True)
+            fig.savefig(path, bbox_inches='tight')
+            plt.close()

@@ -1,20 +1,22 @@
 import logging
+from pathlib import Path
 
 import xarray as xr
-
 from isimip_utils.patterns import match_dataset_path
 
 from .config import settings
-
 
 logger = logging.getLogger(__name__)
 
 
 class Dataset(object):
 
-    def __init__(self, dataset_path):
-        self.path, self.specifiers = match_dataset_path(settings.PATTERN, dataset_path)
+    def __init__(self, dataset_path, primary=True):
+        self.path, self.specifiers = match_dataset_path(settings.PATTERN, Path(dataset_path))
         logger.info('match %s', self.path)
+
+        # set primary flag
+        self.primary = primary
 
         # find files for dataset
         self.files = []
@@ -24,10 +26,6 @@ class Dataset(object):
             first = (index == 0)
             last = (index == len(glob) - 1)
             self.files.append(File(file_path, index, first, last))
-
-    @property
-    def primary(self):
-        return not settings.PRIMARY or self in settings.PRIMARY_DATASETS
 
     def replace_name(self, **specifiers):
         if self.path:
@@ -50,7 +48,7 @@ class File(object):
         self.first = first
         self.last = last
 
-    def load(self):
+    def open(self):
         logger.info(f'load {self.path}')
 
         if settings.DASK:
@@ -61,24 +59,24 @@ class File(object):
         if settings.LOAD:
             self.ds.load()
 
-    def unload(self):
+    def close(self):
         self.ds.close()
 
 
 class Region(object):
 
-    def __init__(self, region):
-        self.type = region['type']
-        self.specifier = region['specifier']
+    def __init__(self, **kwargs):
+        self.type = kwargs['type']
+        self.specifier = kwargs['specifier']
 
         if self.type == 'point':
-            self.lat = region['lat']
-            self.lon = region['lon']
+            self.lat = kwargs['lat']
+            self.lon = kwargs['lon']
 
         elif self.type == 'mask':
-            if region['mask_path'] not in settings.MASKS:
-                settings.MASKS[region['mask_path']] = Mask(region['mask_path'])
-            self.mask = settings.MASKS[region['mask_path']][region['mask_variable']]
+            if kwargs['mask_path'] not in settings.MASKS:
+                settings.MASKS[kwargs['mask_path']] = Mask(kwargs['mask_path'])
+            self.mask = settings.MASKS[kwargs['mask_path']][kwargs['mask_variable']]
 
 
 class Mask(object):
@@ -94,13 +92,16 @@ class Extraction(object):
 
     region_types = None
 
-    def extract(self, dataset, region, file, ds):
-        raise NotImplementedError
-
-    def read(self, dataset, region):
+    def extract(self, dataset, region, file):
         raise NotImplementedError
 
     def exists(self, dataset, region):
+        raise NotImplementedError
+
+    def write(self, ds, path, first):
+        raise NotImplementedError
+
+    def read(self, dataset, region):
         raise NotImplementedError
 
 
@@ -109,10 +110,8 @@ class Assessment(object):
     extractions = None
     region_types = None
 
-    def get_extraction(self, extraction, region):
-        for extraction_class in self.extraction_classes:
-            if region.type in extraction_class.region_types:
-                return extraction_class()
+    def __init__(self, datasets, **kwargs):
+        self.datasets = datasets
 
-    def plot(self, region):
+    def plot(self, extraction, region):
         raise NotImplementedError
