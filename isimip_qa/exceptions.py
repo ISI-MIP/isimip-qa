@@ -1,0 +1,2 @@
+class ExtractionNotFound(Exception):
+    pass
