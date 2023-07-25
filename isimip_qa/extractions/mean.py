@@ -12,8 +12,7 @@ class MeanExtraction(CSVExtractionMixin, Extraction):
     region_types = ['global', 'mask', 'point']
 
     def extract(self, dataset, region, file):
-        path = self.get_path(dataset, region)
-        logger.info(f'extract to {path}')
+        logger.info(f'extract {region.specifier} {self.specifier} from {file.path}')
 
         if region.type == 'mask':
             ds = file.ds.where(region.mask == 1).mean(dim=('lat', 'lon'))
@@ -24,4 +23,6 @@ class MeanExtraction(CSVExtractionMixin, Extraction):
         else:
             ds = file.ds.mean(dim=('lat', 'lon'))
 
+        path = self.get_path(dataset, region)
+        logger.info(f'write {path}')
         self.write(ds, path, first=file.first)

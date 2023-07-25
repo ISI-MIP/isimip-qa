@@ -15,11 +15,10 @@ logger = logging.getLogger(__name__)
 class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
 
     specifier = 'map'
-    extractions = ['slice']
+    extractions = ['meanmap', 'countmap']
 
     def plot(self, extraction, region):
-        path = self.get_path(extraction, region)
-        logger.info(f'create plot {path}' if path else f'create plot {extraction.specifier} {region.specifier}')
+        logger.info(f'plot {extraction.specifier} {region.specifier}')
 
         plots = []
         for index, dataset in enumerate(self.datasets):
@@ -42,8 +41,6 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
             ratio = max((lonmax - lonmin) / (latmax - latmin), 1.0)
 
         nrows, ncols = self.get_grid()
-        ntimes = 1 if settings.TIMES is None else len(settings.TIMES)
-        ncols = ncols * ntimes
         fig, axs = self.get_subplots(nrows, ncols, ratio=ratio)
         plt.subplots_adjust(top=1.1)
 
@@ -52,37 +49,36 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
             irow, icol = self.get_grid_indexes(index)
             label = self.get_label(index)
 
-            times = settings.TIMES or [df.index[0].strftime('%Y-%m-%d')]
-
             vmin = self.get_vmin(var, plots)
             vmax = self.get_vmax(var, plots)
 
-            for time_index, time in enumerate(times):
-                df_pivot = df.loc[time].pivot(index='lat', columns=['lon'], values=var)
-                df_pivot = df_pivot.reindex(index=df_pivot.index[::-1])
+            df_pivot = df.pivot(index='lat', columns=['lon'], values=var)
+            df_pivot = df_pivot.reindex(index=df_pivot.index[::-1])
 
-                # truncate the dataframe at the extensions
-                df_pivot = df_pivot.truncate(before=latmin, after=latmax)
-                df_pivot = df_pivot.truncate(before=lonmin, after=lonmax, axis=1)
+            # truncate the dataframe at the extensions
+            df_pivot = df_pivot.truncate(before=latmin, after=latmax)
+            df_pivot = df_pivot.truncate(before=lonmin, after=lonmax, axis=1)
 
-                ax = axs.item(irow, icol * ntimes + time_index)
+            ax = axs.item(irow, icol)
 
-                im = ax.imshow(df_pivot, interpolation='nearest', label=label,
-                               extent=[lonmin, lonmax, latmin, latmax],
-                               vmin=vmin, vmax=vmax, cmap=settings.CMAP)
+            im = ax.imshow(df_pivot, interpolation='nearest', label=label,
+                           extent=[lonmin, lonmax, latmin, latmax],
+                           vmin=vmin, vmax=vmax, cmap=settings.CMAP)
 
-                title = self.get_title(index)
-                ax.set_title(f'{title} {time}' if title else time, fontsize=10)
-                ax.set_xlabel('lon', fontsize=10)
-                ax.set_ylabel('lat', fontsize=10)
-                ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
+            ax.set_title(self.get_title(index), fontsize=10)
+            ax.set_xlabel('lon', fontsize=10)
+            ax.set_ylabel('lat', fontsize=10)
+            ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
-                if ax not in cbars:
-                    cbar = plt.colorbar(im, ax=ax)
-                    cbar.set_label(f'{var} [{attrs.get("units")}]')
-                    cbar.set_ticks([vmin, vmax])
-                    cbars.append(ax)
+            if ax not in cbars:
+                cbar = plt.colorbar(im, ax=ax)
+                cbar.set_label(f'{var} [{attrs.get("units")}]')
+                cbar.set_ticks([vmin, vmax])
+                cbars.append(ax)
+
+        path = self.get_path(extraction, region)
         if path:
+            logger.info(f'save {path}')
             path.parent.mkdir(exist_ok=True, parents=True)
             fig.savefig(path, bbox_inches='tight')
             plt.close()

@@ -51,10 +51,7 @@ class File(object):
     def open(self):
         logger.info(f'load {self.path}')
 
-        if settings.DASK:
-            self.ds = xr.open_dataset(self.path, chunks={'time': 'auto'})
-        else:
-            self.ds = xr.open_dataset(self.path)
+        self.ds = xr.open_dataset(self.path, chunks={'time': 'auto'})
 
         if settings.LOAD:
             self.ds.load()

@@ -13,10 +13,11 @@ class AttrsExtraction(JSONExtractionMixin, Extraction):
 
     def extract(self, dataset, region, file):
         if file.first:
-            path = self.get_path(dataset, region)
-            logger.info(f'extract to {path}')
+            logger.info(f'extract {region.specifier} {self.specifier} from {file.path}')
 
             var = next(iter(file.ds.data_vars.values()))
             attrs = var.attrs
 
+            path = self.get_path(dataset, region)
+            logger.info(f'write {path}')
             self.write(attrs, path)

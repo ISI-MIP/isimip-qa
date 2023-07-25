@@ -38,8 +38,6 @@ def get_parser():
                         help='Treat these placeholders as primary and plot them in color [default: all]')
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                         help='Always run extractions')
-    parser.add_argument('-d', '--dask', dest='dask', action='store_true', default=False,
-                        help='Use dask to work on time chunks')
     parser.add_argument('-l', '--load', dest='load', action='store_true', default=False,
                         help='Load NetCDF datasets completely in memory')
     parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,
@@ -52,8 +50,6 @@ def get_parser():
     parser.add_argument('--ymax', type=float, dest='ymax', default=None,
                         help='Fixed maximum y value for plots.')
 
-    parser.add_argument('--times', dest='times', default=None,
-                        help='Time steps to use for maps (comma seperated)')
     parser.add_argument('--vmin', type=float, dest='vmin', default=None,
                         help='Fixed minimal colormap value for maps.')
     parser.add_argument('--vmax', type=float, dest='vmax', default=None,

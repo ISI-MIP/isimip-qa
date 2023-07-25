@@ -1,8 +1,8 @@
 import itertools
 import json
 import logging
+from collections import defaultdict
 from itertools import product
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,7 +15,7 @@ from .exceptions import ExtractionNotFound
 logger = logging.getLogger(__name__)
 
 
-class CSVExtractionMixin(object):
+class CSVExtractionMixin:
 
     def get_path(self, dataset, region):
         path = dataset.replace_name(region=region.specifier, extraction=self.specifier)
@@ -56,17 +56,18 @@ class CSVExtractionMixin(object):
         except FileNotFoundError:
             raise ExtractionNotFound
 
-        # parse the time axis of the dataframe
-        df['time'] = df['time'].apply(parse_time)
+        if 'time' in df:
+            # parse the time axis of the dataframe
+            df['time'] = df['time'].apply(parse_time)
 
-        # remove all values without time
-        df = df[df.time.notnull()]
-        df.set_index('time', inplace=True)
+            # remove all values without time
+            df = df[df.time.notnull()]
+            df.set_index('time', inplace=True)
 
         return df
 
 
-class JSONExtractionMixin(object):
+class JSONExtractionMixin:
 
     def get_path(self, dataset, region):
         path = dataset.replace_name(region=region.specifier)
@@ -85,7 +86,7 @@ class JSONExtractionMixin(object):
         return json.load(path.open())
 
 
-class NetCdfExtractionMixin(object):
+class NetCdfExtractionMixin:
 
     def get_path(self, dataset, region):
         path = dataset.replace_name(region=region.specifier)
@@ -112,7 +113,27 @@ class NetCdfExtractionMixin(object):
         return xr.load_dataset(settings.DATASETS_PATH / path)
 
 
-class PlotMixin(object):
+class ConcatExtractionMixin:
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.ds = defaultdict(dict)
+        self.n = defaultdict(dict)
+
+    def concat(self, dataset, region, ds, n):
+        if dataset not in self.ds:
+            self.ds[dataset] = {}
+            self.n[dataset] = {}
+
+        if region not in self.ds[dataset]:
+            self.ds[dataset][region] = ds
+            self.n[dataset][region] = n
+        else:
+            self.ds[dataset][region] += ds
+            self.n[dataset][region] += n
+
+
+class PlotMixin:
 
     def __init__(self, *args, **kwargs):
         self.name = kwargs.pop('name', None)
@@ -173,7 +194,7 @@ class PNGPlotMixin(PlotMixin):
             return path.with_suffix('.png')
 
 
-class GridPlotMixin(object):
+class GridPlotMixin:
 
     def __init__(self, *args, **kwargs):
         self.dimensions = kwargs.pop('dimensions', None)

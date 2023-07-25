@@ -16,8 +16,7 @@ class DayOfYearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
     extractions = ['mean']
 
     def plot(self, extraction, region):
-        path = self.get_path(extraction, region)
-        logger.info(f'create plot {path}' if path else f'create plot {extraction.specifier} {region.specifier}')
+        logger.info(f'plot {extraction.specifier} {region.specifier}')
 
         plots = []
         for index, dataset in enumerate(self.datasets):
@@ -54,7 +53,9 @@ class DayOfYearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             ax.set_ylim(ymin, ymax)
             ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
+        path = self.get_path(extraction, region)
         if path:
+            logger.info(f'save {path}')
             path.parent.mkdir(exist_ok=True, parents=True)
             fig.savefig(path, bbox_inches='tight')
             plt.close()

@@ -97,10 +97,6 @@ class Settings(BaseSettings):
         return self.args.get('PRIMARY').split(',')
 
     @cached_property
-    def TIMES(self):
-        return sorted([self.parse_time(time) for time in self.args.get('TIMES', '').split(',')])
-
-    @cached_property
     def DEFINITIONS(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
         return fetch_definitions(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
