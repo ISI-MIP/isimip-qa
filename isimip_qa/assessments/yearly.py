@@ -2,7 +2,6 @@ import logging
 
 import matplotlib.pyplot as plt
 
-from ..exceptions import ExtractionNotFound
 from ..extractions.attrs import AttrsExtraction
 from ..mixins import GridPlotMixin, SVGPlotMixin
 from ..models import Assessment
@@ -15,41 +14,36 @@ class YearlyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
     specifier = 'yearly'
     extractions = ['mean']
 
+    def get_df(self, extraction, dataset, region):
+        return extraction.read(dataset, region).groupby(lambda x: x.year).mean()
+
+    def get_attrs(self, extraction, dataset, region):
+        return AttrsExtraction().read(dataset, region)
+
     def plot(self, extraction, region):
         logger.info(f'plot {extraction.specifier} {region.specifier}')
 
-        plots = []
-        for index, dataset in enumerate(self.datasets):
-            try:
-                df = extraction.read(dataset, region).groupby(lambda x: x.year).mean()
-                var = df.columns[-1]
-                attrs = AttrsExtraction().read(dataset, region)
-                plots.append((index, df, var, attrs, dataset.primary))
-            except ExtractionNotFound:
-                continue
+        subplots = self.get_subplots(extraction, region)
 
         nrows, ncols = self.get_grid()
-        fig, axs = self.get_subplots(nrows, ncols)
+        fig, axs = self.get_figure(nrows, ncols)
 
-        for index, df, var, attrs, primary in plots:
-            irow, icol = self.get_grid_indexes(index)
-            label = self.get_label(index)
+        for sp in subplots:
+            ax = axs.item(sp.irow, sp.icol)
 
-            ymin = self.get_ymin(var, plots)
-            ymax = self.get_ymax(var, plots)
+            ymin = self.get_ymin(sp.irow, sp.icol, subplots)
+            ymax = self.get_ymax(sp.irow, sp.icol, subplots)
 
-            ax = axs.item(irow, icol)
-
-            if primary:
-                ax.step(df.index, df[var], where='mid', label=label, zorder=10)
-                if label:
+            if sp.primary:
+                ax.step(sp.df.index, sp.df[sp.var], where='mid', label=sp.label, zorder=10)
+                if sp.label:
                     ax.legend(loc='lower left')
             else:
-                ax.step(df.index, df[var], where='mid', color='grey', zorder=0)
+                ax.step(sp.df.index, sp.df[sp.var], where='mid', color='grey', zorder=0)
 
-            ax.set_title(self.get_title(index))
+            ax.set_title(sp.title)
             ax.set_xlabel('date')
-            ax.set_ylabel(f'{var} [{attrs.get("units")}]')
+            ax.set_ylabel(f'{sp.var} [{sp.attrs.get("units")}]')
             ax.set_ylim(ymin, ymax)
             ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 

@@ -116,3 +116,9 @@ class Assessment(object):
 
     def plot(self, extraction, region):
         raise NotImplementedError
+
+
+class Subplot(object):
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)

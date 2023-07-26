@@ -10,6 +10,8 @@ import pandas as pd
 import xarray as xr
 
 from .config import settings
+from .models import Subplot
+
 from .exceptions import ExtractionNotFound
 
 logger = logging.getLogger(__name__)
@@ -157,30 +159,6 @@ class PlotMixin:
 
             return settings.ASSESSMENTS_PATH / name
 
-    def get_ymin(self, var, plots):
-        if settings.YMIN is None:
-            return min([plot[1][var].min() for plot in plots if plot[2] == var]) * 0.99
-        else:
-            return settings.YMIN
-
-    def get_ymax(self, var, plots):
-        if settings.YMAX is None:
-            return max([plot[1][var].max() for plot in plots if plot[2] == var]) * 1.01
-        else:
-            return settings.YMAX
-
-    def get_vmin(self, var, plots):
-        if settings.VMIN is None:
-            return min([plot[1][var].min() for plot in plots if plot[2] == var])
-        else:
-            return settings.VMIN
-
-    def get_vmax(self, var, plots):
-        if settings.VMAX is None:
-            return max([plot[1][var].max() for plot in plots if plot[2] == var])
-        else:
-            return settings.VMAX
-
 
 class SVGPlotMixin(PlotMixin):
 
@@ -208,7 +186,7 @@ class GridPlotMixin:
             self.permutations = list(product(*self.dimensions.values()))
         super().__init__(*args, **kwargs)
 
-    def get_subplots(self, nrows, ncols, ratio=1):
+    def get_figure(self, nrows, ncols, ratio=1):
         fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(6 * ratio * ncols, 6 * nrows))
         for ax in itertools.chain.from_iterable(axs):
             ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
@@ -239,6 +217,37 @@ class GridPlotMixin:
                         pass
         return grid_indexes
 
+    def get_subplots(self, extraction, region):
+        subplots = []
+        for index, dataset in enumerate(self.datasets):
+            try:
+                df = self.get_df(extraction, dataset, region)
+            except ExtractionNotFound:
+                continue
+
+            try:
+                attrs = self.get_attrs(extraction, dataset, region)
+            except ExtractionNotFound:
+                attrs = {}
+
+            var = df.columns[-1]
+            irow, icol = self.get_grid_indexes(index)
+
+            subplot = Subplot(
+                df=df,
+                attrs=attrs,
+                var=var,
+                label=self.get_label(index),
+                title=self.get_title(index),
+                irow=irow,
+                icol=icol,
+                primary=dataset.primary
+            )
+
+            subplots.append(subplot)
+
+        return subplots
+
     def get_title(self, i):
         if self.dimensions:
             t = []
@@ -253,3 +262,27 @@ class GridPlotMixin:
     def get_label(self, i):
         if self.dimensions:
             return ' '.join(self.permutations[i][self.grid:])
+
+    def get_ymin(self, irow, icol, subplots):
+        if settings.YMIN is None:
+            return min([sp.df[sp.var].min() for sp in subplots if sp.irow == irow and sp.icol == icol]) * 0.99
+        else:
+            return settings.YMIN
+
+    def get_ymax(self, irow, icol, subplots):
+        if settings.YMAX is None:
+            return max([sp.df[sp.var].max() for sp in subplots if sp.irow == irow and sp.icol == icol]) * 1.01
+        else:
+            return settings.YMAX
+
+    def get_vmin(self, irow, icol, subplots):
+        if settings.VMIN is None:
+            return min([sp.df[sp.var].min() for sp in subplots if sp.irow == irow and sp.icol == icol])
+        else:
+            return settings.VMIN
+
+    def get_vmax(self, irow, icol, subplots):
+        if settings.VMAX is None:
+            return max([sp.df[sp.var].max() for sp in subplots if sp.irow == irow and sp.icol == icol])
+        else:
+            return settings.VMAX
