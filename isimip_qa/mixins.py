@@ -43,7 +43,11 @@ class CSVExtractionMixin:
         # manually set every timestamp before to None using a custom date_parser
         def parse_time(time):
             try:
-                return pd.Timestamp(np.datetime64(time))
+                try:
+                    return pd.Timestamp(np.datetime64(time))
+                except ValueError:
+                    # workaround for non standard times (e.g. growing seasons)
+                    return pd.Timestamp(year=int(time), month=1, day=1)
             except pd.errors.OutOfBoundsDatetime:
                 return pd.NaT
 

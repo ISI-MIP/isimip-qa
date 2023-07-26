@@ -51,7 +51,11 @@ class File(object):
     def open(self):
         logger.info(f'load {self.path}')
 
-        self.ds = xr.open_dataset(self.path, chunks={'time': 'auto'})
+        try:
+            self.ds = xr.open_dataset(self.path, chunks={'time': 'auto'})
+        except ValueError:
+            # workaround for non standard times (e.g. growing seasons)
+            self.ds = xr.open_dataset(self.path, chunks={'time': 'auto'}, decode_times=False)
 
         if settings.LOAD:
             self.ds.load()
