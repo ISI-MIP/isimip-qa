@@ -178,12 +178,18 @@ class PNGPlotMixin(PlotMixin):
 
 class GridPlotMixin:
 
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#bcbd22', '#17becf']
+    linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
+    markers = ['.', '*', 'D', 's']
+
     def __init__(self, *args, **kwargs):
         self.dimensions = kwargs.pop('dimensions', None)
         self.grid = kwargs.pop('grid', 2)
         if self.dimensions:
             self.keys = list(self.dimensions.keys())
             self.permutations = list(product(*self.dimensions.values()))
+            self.styles = self.get_styles()
+
         super().__init__(*args, **kwargs)
 
     def get_figure(self, nrows, ncols, ratio=1):
@@ -217,6 +223,23 @@ class GridPlotMixin:
                         pass
         return grid_indexes
 
+    def get_styles(self):
+        # create a specific style for each label
+        styles = {}
+        for permutation in self.permutations:
+            label = permutation[self.grid:]
+            if label not in styles:
+                index = len(styles.keys())
+                color_index = index % len(self.colors)
+                linestyle_index = int(index / len(self.colors)) % len(self.linestyles)
+                marker_index = int(index / len(self.colors)) % len(self.markers)
+                styles[label] = (
+                    self.colors[color_index],
+                    self.linestyles[linestyle_index],
+                    self.markers[marker_index]
+                )
+        return styles
+
     def get_subplots(self, extraction, region):
         subplots = []
         for index, dataset in enumerate(self.datasets):
@@ -239,6 +262,9 @@ class GridPlotMixin:
                 var=var,
                 label=self.get_label(index),
                 title=self.get_title(index),
+                color=self.get_color(index),
+                linestyle=self.get_linestyle(index),
+                marker=self.get_marker(index),
                 irow=irow,
                 icol=icol,
                 primary=dataset.primary
@@ -262,6 +288,18 @@ class GridPlotMixin:
     def get_label(self, i):
         if self.dimensions:
             return ' '.join(self.permutations[i][self.grid:])
+
+    def get_color(self, i):
+        if self.dimensions:
+            return self.styles[self.permutations[i][self.grid:]][0]
+
+    def get_linestyle(self, i):
+        if self.dimensions:
+            return self.styles[self.permutations[i][self.grid:]][1]
+
+    def get_marker(self, i):
+        if self.dimensions:
+            return self.styles[self.permutations[i][self.grid:]][2]
 
     def get_ymin(self, irow, icol, subplots):
         if settings.YMIN is None:

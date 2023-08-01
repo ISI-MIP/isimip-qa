@@ -35,11 +35,11 @@ class DayOfYearAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             ymax = self.get_ymax(sp.irow, sp.icol, subplots)
 
             if sp.primary:
-                ax.scatter(sp.df.index, sp.df[sp.var], s=10, marker='.', label=sp.label, zorder=10)
+                ax.step(sp.df.index, sp.df[sp.var], where='mid', color=sp.color, linestyle=sp.linestyle, label=sp.label, zorder=10)
                 if sp.label:
                     ax.legend(loc='lower left').set_zorder(20)
             else:
-                ax.scatter(sp.df.index, sp.df[sp.var], s=10, marker='.', color='grey', zorder=0)
+                ax.step(sp.df.index, sp.df[sp.var], where='mid', color='grey', zorder=0)
 
             ax.set_title(sp.title)
             ax.set_xlabel('day of the year')
