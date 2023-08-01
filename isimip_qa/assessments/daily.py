@@ -37,7 +37,7 @@ class DailyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             if sp.primary:
                 ax.plot(sp.df.index, sp.df[sp.var], label=sp.label, zorder=10)
                 if sp.label:
-                    ax.legend(loc='lower left')
+                    ax.legend(loc='lower left').set_zorder(20)
             else:
                 ax.plot(sp.df.index, sp.df[sp.var], color='grey', zorder=0)
 

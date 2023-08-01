@@ -37,7 +37,7 @@ class YearlyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
             if sp.primary:
                 ax.step(sp.df.index, sp.df[sp.var], where='mid', label=sp.label, zorder=10)
                 if sp.label:
-                    ax.legend(loc='lower left')
+                    ax.legend(loc='lower left').set_zorder(20)
             else:
                 ax.step(sp.df.index, sp.df[sp.var], where='mid', color='grey', zorder=0)
 
