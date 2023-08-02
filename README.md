@@ -1,9 +1,8 @@
 ISIMIP quality assessment
 =========================
 
-[![Latest release](https://shields.io/github/v/release/ISI-MIP/isimip-qa)](https://github.com/ISI-MIP/isimip-qa/releases)
-[![Python Version: 3.6|3.7|3.8|3.9|3.10](https://img.shields.io/badge/python-3.6|3.7|3.8|3.9|3.10-blue)](https://www.python.org/)
-[![License: MIT](http://img.shields.io/badge/license-MIT-yellow.svg)](https://github.com/ISI-MIP/isimip-qa/blob/master/LICENSE)
+[![Python Version](https://img.shields.io/badge/python->=3.8-blue)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green)](https://github.com/ISI-MIP/isimip-qc/blob/master/LICENSE)
 
 A command line tool to for quality assessment whithin the ISIMIP project.
 
