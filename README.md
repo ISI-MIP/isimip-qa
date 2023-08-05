@@ -1,7 +1,6 @@
 ISIMIP quality assessment
 =========================
 
-[![Latest Release](https://img.shields.io/pypi/v/isimip-qa)](https://pypi.org/project/isimip-qa/)
 [![Python Version](https://img.shields.io/badge/python->=3.8-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/ISI-MIP/isimip-qc/blob/master/LICENSE)
 
