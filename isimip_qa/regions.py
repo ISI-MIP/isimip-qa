@@ -20,7 +20,7 @@ for specifier, lat, lon in points:
     })
 
 countrymask_path = 'ISIMIP3a/InputData/geo_conditions/countrymasks/countrymasks_fractional.nc'
-countries = [
+countrymask_codes = [
     'AFG', 'ALB', 'DZA', 'AND', 'AGO', 'ATG', 'ARG', 'ARM', 'AUS', 'AUT',
     'AZE', 'BHS', 'BHR', 'BGD', 'BRB', 'BLR', 'BEL', 'BLZ', 'BEN', 'BTN',
     'BOL', 'BIH', 'BWA', 'BRA', 'BRN', 'BGR', 'BFA', 'BDI', 'KHM', 'CMR',
@@ -45,10 +45,25 @@ countries = [
     'ESH', 'YEM', 'ZMB', 'ZWE'
 ]
 
-for code in countries:
+for code in countrymask_codes:
     regions_list.append({
         'type': 'mask',
         'specifier': code.lower(),
         'mask_path': countrymask_path,
+        'mask_variable': f'm_{code}'
+    })
+
+georgimask_path = 'ISIMIP3a/InputData/geo_conditions/masks/georgimask.nc'
+georgimask_codes = [
+    'ALA', 'AMZ', 'CAM', 'CAN', 'CAS', 'CSA', 'EAF', 'EAS', 'ENA', 'EQF',
+    'GRL', 'MED', 'NAS', 'NAU', 'NEE', 'NEU', 'SAF', 'SAH', 'SAS', 'SAU',
+    'SEA', 'SQF', 'SSA', 'TIB', 'WAF', 'WNA',
+]
+
+for code in georgimask_codes:
+    regions_list.append({
+        'type': 'mask',
+        'specifier': code.lower(),
+        'mask_path': georgimask_path,
         'mask_variable': f'm_{code}'
     })
