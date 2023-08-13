@@ -187,7 +187,8 @@ class GridPlotMixin:
         self.grid = kwargs.pop('grid', 2)
         if self.dimensions:
             self.keys = list(self.dimensions.keys())
-            self.permutations = list(product(*self.dimensions.values()))
+            self.values = list(self.dimensions.values())
+            self.permutations = list(product(*self.values))
             self.styles = self.get_styles()
 
         super().__init__(*args, **kwargs)
@@ -198,30 +199,49 @@ class GridPlotMixin:
             ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
         return fig, axs
 
-    def get_grid(self):
-        grid = [1, 1]
+    def get_grid(self, figs=False):
+        grid = [1, 1, 1] if figs else [1, 1]
+
         if self.dimensions:
-            for d, j in enumerate([1, 0]):
-                if self.grid > j:
-                    try:
-                        key = self.keys[j]
-                        grid[d] = len(self.dimensions[key])
-                    except IndexError:
-                        pass
-        return grid
+            for j, key in enumerate(self.keys):
+                ndim = len(self.dimensions[key])
+
+                if j < self.grid:
+                    grid[j] = ndim
+
+                if figs:
+                    if j == self.grid:
+                        grid[-1] = len(self.values[j])
+                    elif figs:
+                        grid[-1] *= len(self.values[j])
+
+        return reversed(grid)
 
     def get_grid_indexes(self, i):
-        grid_indexes = [0, 0]
+        # 0 0 0*2+0
+        # 0 1 0*2+1
+        # 1 0 1*2+0
+        # 1 1 1*2+1
+        # 2 0 2*2+0
+        # 2 1 2*2+1
+
+        grid_indexes = [0, 0, 0]
+
         if self.dimensions:
-            for d, j in enumerate([1, 0]):
-                if self.grid > j:
-                    try:
-                        key = self.keys[j]
-                        value = self.permutations[i][j]
-                        grid_indexes[d] = self.dimensions[key].index(value)
-                    except IndexError:
-                        pass
-        return grid_indexes
+            permutation = self.permutations[i]
+
+            for j, key in enumerate(self.keys):
+                value = permutation[j]
+                value_index = self.dimensions[key].index(value)
+
+                if j < self.grid:
+                    grid_indexes[j] = value_index
+                elif j == len(self.keys) - 1:
+                    grid_indexes[-1] += value_index
+                else:
+                    grid_indexes[-1] += value_index * len(self.values[j+1])
+
+        return reversed(grid_indexes)
 
     def get_styles(self):
         # create a specific style for each label
@@ -243,6 +263,8 @@ class GridPlotMixin:
     def get_subplots(self, extraction, region):
         subplots = []
         for index, dataset in enumerate(self.datasets):
+            ifig, irow, icol = self.get_grid_indexes(index)
+
             try:
                 df = self.get_df(extraction, dataset, region)
             except ExtractionNotFound:
@@ -254,7 +276,6 @@ class GridPlotMixin:
                 attrs = {}
 
             var = df.columns[-1]
-            irow, icol = self.get_grid_indexes(index)
 
             subplot = Subplot(
                 df=df,
@@ -262,9 +283,11 @@ class GridPlotMixin:
                 var=var,
                 label=self.get_label(index),
                 title=self.get_title(index),
+                full_title=self.get_full_title(index),
                 color=self.get_color(index),
                 linestyle=self.get_linestyle(index),
                 marker=self.get_marker(index),
+                ifig=ifig,
                 irow=irow,
                 icol=icol,
                 primary=dataset.primary
@@ -274,16 +297,13 @@ class GridPlotMixin:
 
         return subplots
 
+    def get_full_title(self, i):
+        if self.dimensions:
+            return ' '.join(self.permutations[i])
+
     def get_title(self, i):
         if self.dimensions:
-            t = []
-            for j in [1, 0]:
-                if self.grid > j:
-                    try:
-                        t.append(self.permutations[i][j])
-                    except IndexError:
-                        pass
-            return ' '.join(t)
+            return ' '.join(self.permutations[i][:self.grid])
 
     def get_label(self, i):
         if self.dimensions:
