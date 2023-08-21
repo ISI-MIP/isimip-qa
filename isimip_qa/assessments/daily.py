@@ -31,8 +31,8 @@ class DailyAssessment(SVGPlotMixin, GridPlotMixin, Assessment):
         for sp in subplots:
             ax = axs.item(sp.irow, sp.icol)
 
-            ymin = self.get_ymin(sp.irow, sp.icol, subplots)
-            ymax = self.get_ymax(sp.irow, sp.icol, subplots)
+            ymin = self.get_ymin(sp, subplots)
+            ymax = self.get_ymax(sp, subplots)
 
             if sp.primary:
                 ax.plot(sp.df.index, sp.df[sp.var], label=sp.label, zorder=10)

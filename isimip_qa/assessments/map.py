@@ -48,8 +48,8 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
                 if sp.ifig == ifig:
                     ax = axs.item(sp.irow, sp.icol)
 
-                    vmin = self.get_vmin(sp.irow, sp.icol, subplots)
-                    vmax = self.get_vmax(sp.irow, sp.icol, subplots)
+                    vmin = self.get_vmin(sp, subplots)
+                    vmax = self.get_vmax(sp, subplots)
 
                     df_pivot = sp.df.pivot(index='lat', columns=['lon'], values=sp.var)
                     df_pivot = df_pivot.reindex(index=df_pivot.index[::-1])

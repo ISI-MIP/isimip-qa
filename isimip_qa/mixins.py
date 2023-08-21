@@ -321,26 +321,38 @@ class GridPlotMixin:
         if self.dimensions:
             return self.styles[self.permutations[i][self.grid:]][2]
 
-    def get_ymin(self, irow, icol, subplots):
+    def get_ymin(self, subplot, subplots):
         if settings.YMIN is None:
-            return min([sp.df[sp.var].min() for sp in subplots if sp.irow == irow and sp.icol == icol]) * 0.99
+            return min([
+                sp.df[sp.var].min() for sp in subplots
+                if sp.ifig == subplot.ifig and sp.irow == subplot.irow and sp.icol == subplot.icol
+            ]) * 0.99
         else:
             return settings.YMIN
 
-    def get_ymax(self, irow, icol, subplots):
+    def get_ymax(self, subplot, subplots):
         if settings.YMAX is None:
-            return max([sp.df[sp.var].max() for sp in subplots if sp.irow == irow and sp.icol == icol]) * 1.01
+            return max([
+                sp.df[sp.var].max() for sp in subplots
+                if sp.ifig == subplot.ifig and sp.irow == subplot.irow and sp.icol == subplot.icol
+            ]) * 1.01
         else:
             return settings.YMAX
 
-    def get_vmin(self, irow, icol, subplots):
+    def get_vmin(self, subplot, subplots):
         if settings.VMIN is None:
-            return min([sp.df[sp.var].min() for sp in subplots if sp.irow == irow and sp.icol == icol])
+            return min([
+                sp.df[sp.var].min() for sp in subplots
+                if sp.ifig == subplot.ifig and sp.irow == subplot.irow and sp.icol == subplot.icol
+            ])
         else:
             return settings.VMIN
 
-    def get_vmax(self, irow, icol, subplots):
+    def get_vmax(self, subplot, subplots):
         if settings.VMAX is None:
-            return max([sp.df[sp.var].max() for sp in subplots if sp.irow == irow and sp.icol == icol])
+            return max([
+                sp.df[sp.var].max() for sp in subplots
+                if sp.ifig == subplot.ifig and sp.irow == subplot.irow and sp.icol == subplot.icol
+            ])
         else:
             return settings.VMAX
