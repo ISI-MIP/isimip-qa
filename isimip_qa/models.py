@@ -11,12 +11,9 @@ logger = logging.getLogger(__name__)
 
 class Dataset(object):
 
-    def __init__(self, dataset_path, primary=True):
+    def __init__(self, dataset_path):
         self.path, self.specifiers = match_dataset_path(settings.PATTERN, Path(dataset_path))
         logger.info('match %s', self.path)
-
-        # set primary flag
-        self.primary = primary
 
         # find files for dataset
         self.files = []

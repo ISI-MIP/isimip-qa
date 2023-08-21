@@ -250,6 +250,18 @@ class GridPlotMixin:
                 )
         return styles
 
+    def get_primary(self, i):
+        if self.dimensions and settings.PRIMARY:
+            permutation = self.permutations[i]
+
+            for j, key in enumerate(self.keys):
+                if permutation[j] in settings.PRIMARY:
+                    return True
+
+            return False
+        else:
+            return True
+
     def get_subplots(self, extraction, region):
         subplots = []
         for index, dataset in enumerate(self.datasets):
@@ -280,7 +292,7 @@ class GridPlotMixin:
                 ifig=ifig,
                 irow=irow,
                 icol=icol,
-                primary=dataset.primary
+                primary=self.get_primary(index)
             )
 
             subplots.append(subplot)

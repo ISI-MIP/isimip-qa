@@ -84,9 +84,9 @@ def main():
 
     # create list of datasets
     datasets = []
-    for path, primary in settings.DATASETS:
+    for path in settings.DATASETS:
         try:
-            dataset = Dataset(path, primary)
+            dataset = Dataset(path)
             datasets.append(dataset)
         except DidNotMatch as e:
             parser.error(e)

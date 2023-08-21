@@ -39,12 +39,11 @@ class Settings(BaseSettings):
                 path_str = str(self.PATH).format(**placeholders)
                 path = Path(path_str)
                 path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
-                primary = bool(set(permutations).intersection(settings.PRIMARY)) if settings.PRIMARY else True
-                datasets.append((path, primary))
+                datasets.append(path)
 
             return datasets
         else:
-            return [(self.PATH, True)]
+            return [self.PATH]
 
     @cached_property
     def PROTOCOL_PATH(self):
@@ -64,21 +63,6 @@ class Settings(BaseSettings):
     @cached_property
     def ASSESSMENTS_PATH(self):
         return Path(self.args['ASSESSMENTS_PATH']).expanduser()
-
-    @cached_property
-    def ASSESSMENTS_NAME(self):
-        placeholders = {}
-        for placeholder, values in self.PLACEHOLDERS.items():
-            primary_values = [value for value in values if value in self.PRIMARY]
-            if primary_values:
-                values_strings = primary_values
-            elif len(values) < 10:
-                values_strings = values
-            else:
-                values_strings = ['various']
-            placeholders[placeholder] = '+'.join(values_strings).lower()
-
-        return self.PATH.name.format(**placeholders)
 
     @cached_property
     def REGIONS(self):
