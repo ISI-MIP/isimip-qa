@@ -139,43 +139,6 @@ class ConcatExtractionMixin:
             self.n[dataset][region] += n
 
 
-class PlotMixin:
-
-    def __init__(self, *args, **kwargs):
-        self.name = kwargs.pop('name', None)
-        self.ymin = self.ymax = self.vmin = self.vmax = {}
-        super().__init__(*args, **kwargs)
-
-    def get_path(self, extraction, region):
-        if self.name:
-            name = self.name
-
-            # overwrite _global_ with the region, this is not very elegant,
-            # but after a lot (!) of experiments, this is the best solution ...
-            name = name.replace('_global_', '_' + region.specifier + '_')
-
-            # add the extration and the assessment specifiers
-            name = name + '_' + extraction.specifier + '_' + self.specifier
-
-            return settings.ASSESSMENTS_PATH / name
-
-
-class SVGPlotMixin(PlotMixin):
-
-    def get_path(self, extraction, region):
-        path = super().get_path(extraction, region)
-        if path:
-            return path.with_suffix('.svg')
-
-
-class PNGPlotMixin(PlotMixin):
-
-    def get_path(self, extraction, region):
-        path = super().get_path(extraction, region)
-        if path:
-            return path.with_suffix('.png')
-
-
 class GridPlotMixin:
 
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#bcbd22', '#17becf']
@@ -199,6 +162,40 @@ class GridPlotMixin:
             ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
         return fig, axs
 
+    def get_path(self, extraction, region, ifig=None):
+        name = settings.PATH.name
+
+        if self.dimensions:
+            placeholders = {}
+
+            for j, key in enumerate(self.keys):
+                if ifig is None or j < self.grid:
+                    primary_values = [value for value in self.values[j] if value in settings.PRIMARY]
+                    if primary_values:
+                        values_strings = primary_values
+                    elif len(self.values[j]) < 10:
+                        values_strings = self.values[j]
+                    else:
+                        values_strings = ['various']
+                else:
+                    # this works because for j > self.grid, the permutations
+                    # only repeat with a "period" of nfig
+                    values_strings = [self.permutations[ifig][j]]
+
+                placeholders[key] = '+'.join(values_strings).lower()
+
+            # apply placeholders
+            name = name.format(**placeholders)
+
+            # overwrite _global_ with the region, this is not very elegant,
+            # but after a lot (!) of experiments, this is the best solution ...
+            name = name.replace('_global_', '_' + region.specifier + '_')
+
+            # add the extration and the assessment specifiers
+            name = name + '_' + extraction.specifier + '_' + self.specifier
+
+        return settings.ASSESSMENTS_PATH / name
+
     def get_grid(self, figs=False):
         grid = [1, 1, 1] if figs else [1, 1]
 
@@ -212,19 +209,12 @@ class GridPlotMixin:
                 if figs:
                     if j == self.grid:
                         grid[-1] = len(self.values[j])
-                    elif figs:
+                    else:
                         grid[-1] *= len(self.values[j])
 
         return reversed(grid)
 
     def get_grid_indexes(self, i):
-        # 0 0 0*2+0
-        # 0 1 0*2+1
-        # 1 0 1*2+0
-        # 1 1 1*2+1
-        # 2 0 2*2+0
-        # 2 1 2*2+1
-
         grid_indexes = [0, 0, 0]
 
         if self.dimensions:

@@ -106,7 +106,7 @@ def main():
 
     # create list of assessments
     assessments = [
-        assessment_class(datasets, dimensions=settings.PLACEHOLDERS, grid=settings.GRID, name=settings.ASSESSMENTS_NAME)
+        assessment_class(datasets, dimensions=settings.PLACEHOLDERS, grid=settings.GRID)
         for assessment_class in assessment_classes
         if settings.ASSESSMENTS is None or assessment_class.specifier in settings.ASSESSMENTS
     ]

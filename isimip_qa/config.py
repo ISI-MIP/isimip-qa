@@ -69,7 +69,7 @@ class Settings(BaseSettings):
     def ASSESSMENTS_NAME(self):
         placeholders = {}
         for placeholder, values in self.PLACEHOLDERS.items():
-            primary_values = [value for value in values if value in self.PRIMARY] if self.PRIMARY else []
+            primary_values = [value for value in values if value in self.PRIMARY]
             if primary_values:
                 values_strings = primary_values
             elif len(values) < 10:
@@ -94,7 +94,7 @@ class Settings(BaseSettings):
 
     @cached_property
     def PRIMARY(self):
-        return self.args.get('PRIMARY').split(',')
+        return self.args.get('PRIMARY').split(',') if self.args.get('PRIMARY') else []
 
     @cached_property
     def DEFINITIONS(self):

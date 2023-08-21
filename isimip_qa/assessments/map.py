@@ -5,13 +5,13 @@ import pandas as pd
 
 from ..config import settings
 from ..extractions.attrs import AttrsExtraction
-from ..mixins import GridPlotMixin, PNGPlotMixin
+from ..mixins import GridPlotMixin
 from ..models import Assessment
 
 logger = logging.getLogger(__name__)
 
 
-class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
+class MapAssessment(GridPlotMixin, Assessment):
 
     specifier = 'map'
     extractions = ['meanmap', 'countmap']
@@ -73,8 +73,9 @@ class MapAssessment(PNGPlotMixin, GridPlotMixin, Assessment):
                         cbar.set_ticks([vmin, vmax])
                         cbars.append(ax)
 
-            path = self.get_path(extraction, region).with_suffix(f'.{ifig}.svg')
+            path = self.get_path(extraction, region, ifig)
             if path:
+                path = path.with_suffix('.svg')
                 logger.info(f'save {path}')
                 path.parent.mkdir(exist_ok=True, parents=True)
                 fig.savefig(path, bbox_inches='tight')
