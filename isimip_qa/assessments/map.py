@@ -40,43 +40,42 @@ class MapAssessment(GridPlotMixin, Assessment):
         nfigs, nrows, ncols = self.get_grid(figs=True)
 
         for ifig in range(nfigs):
+            fig_subplots = [sp for sp in subplots if sp.ifig == ifig]
+
             fig, axs = self.get_figure(nrows, ncols, ratio=ratio)
             plt.subplots_adjust(top=1.1)
 
             cbars = []
-            for sp in subplots:
-                if sp.ifig == ifig:
-                    ax = axs.item(sp.irow, sp.icol)
+            for sp in fig_subplots:
+                ax = axs.item(sp.irow, sp.icol)
 
-                    vmin = self.get_vmin(sp, subplots)
-                    vmax = self.get_vmax(sp, subplots)
+                vmin = self.get_vmin(sp, subplots)
+                vmax = self.get_vmax(sp, subplots)
 
-                    df_pivot = sp.df.pivot(index='lat', columns=['lon'], values=sp.var)
-                    df_pivot = df_pivot.reindex(index=df_pivot.index[::-1])
+                df_pivot = sp.df.pivot(index='lat', columns=['lon'], values=sp.var)
+                df_pivot = df_pivot.reindex(index=df_pivot.index[::-1])
 
-                    # truncate the dataframe at the extensions
-                    df_pivot = df_pivot.truncate(before=latmin, after=latmax)
-                    df_pivot = df_pivot.truncate(before=lonmin, after=lonmax, axis=1)
+                # truncate the dataframe at the extensions
+                df_pivot = df_pivot.truncate(before=latmin, after=latmax)
+                df_pivot = df_pivot.truncate(before=lonmin, after=lonmax, axis=1)
 
-                    im = ax.imshow(df_pivot, interpolation='nearest', label=sp.label,
-                                   extent=[lonmin, lonmax, latmin, latmax],
-                                   vmin=vmin, vmax=vmax, cmap=settings.CMAP)
+                im = ax.imshow(df_pivot, interpolation='nearest', label=sp.label,
+                               extent=[lonmin, lonmax, latmin, latmax],
+                               vmin=vmin, vmax=vmax, cmap=settings.CMAP)
 
-                    ax.set_title(sp.full_title, fontsize=10)
-                    ax.set_xlabel('lon', fontsize=10)
-                    ax.set_ylabel('lat', fontsize=10)
-                    ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
+                ax.set_title(sp.full_title, fontsize=10)
+                ax.set_xlabel('lon', fontsize=10)
+                ax.set_ylabel('lat', fontsize=10)
+                ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
-                    if ax not in cbars:
-                        cbar = plt.colorbar(im, ax=ax)
-                        cbar.set_label(f'{sp.var} [{sp.attrs.get("units")}]')
-                        cbar.set_ticks([vmin, vmax])
-                        cbars.append(ax)
+                if ax not in cbars:
+                    cbar = plt.colorbar(im, ax=ax)
+                    cbar.set_label(f'{sp.var} [{sp.attrs.get("units")}]')
+                    cbar.set_ticks([vmin, vmax])
+                    cbars.append(ax)
 
-            path = self.get_path(extraction, region, ifig)
-            if path:
-                path = path.with_suffix('.svg')
-                logger.info(f'save {path}')
-                path.parent.mkdir(exist_ok=True, parents=True)
-                fig.savefig(path, bbox_inches='tight')
-                plt.close()
+            if fig_subplots:
+                path = self.get_path(extraction, region, ifig)
+                self.save_figure(fig, path)
+
+            plt.close()

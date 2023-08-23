@@ -47,10 +47,8 @@ class MonthOfYearAssessment(GridPlotMixin, Assessment):
             ax.set_ylim(ymin, ymax)
             ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
-        path = self.get_path(extraction, region)
-        if path:
-            path = path.with_suffix('.svg')
-            logger.info(f'save {path}')
-            path.parent.mkdir(exist_ok=True, parents=True)
-            fig.savefig(path, bbox_inches='tight')
-            plt.close()
+        if subplots:
+            path = self.get_path(extraction, region)
+            self.save_figure(fig, path)
+
+        plt.close()

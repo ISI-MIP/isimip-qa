@@ -139,9 +139,19 @@ class ConcatExtractionMixin:
             self.n[dataset][region] += n
 
 
-class GridPlotMixin:
+class PlotMixin:
 
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#bcbd22', '#17becf']
+    def __init__(self, *args, **kwargs):
+        self.save = kwargs.pop('save', False)
+        super().__init__(*args, **kwargs)
+
+    def save_figure(self, fig, path):
+        if self.save:
+            path = path.with_suffix(f'.{settings.ASSESSMENTS_FORMAT}')
+            path.parent.mkdir(exist_ok=True, parents=True)
+
+            logger.info(f'save {path}')
+            fig.savefig(path, bbox_inches='tight')
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
     markers = ['.', '*', 'D', 's']
 

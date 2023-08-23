@@ -44,6 +44,8 @@ def get_parser():
                         help='Run only assessments')
     parser.add_argument('--assessments-only', dest='assessments_only', action='store_true', default=False,
                         help='Run only assessments')
+    parser.add_argument('--assessments-format', dest='assessments_format', default='png',
+                        help='File format for assessment plots [default: png].')
 
     parser.add_argument('--ymin', type=float, dest='ymin', default=None,
                         help='Fixed minimal y value for plots.')
@@ -106,7 +108,7 @@ def main():
 
     # create list of assessments
     assessments = [
-        assessment_class(datasets, dimensions=settings.PLACEHOLDERS, grid=settings.GRID)
+        assessment_class(datasets, dimensions=settings.PLACEHOLDERS, grid=settings.GRID, save=True)
         for assessment_class in assessment_classes
         if settings.ASSESSMENTS is None or assessment_class.specifier in settings.ASSESSMENTS
     ]
