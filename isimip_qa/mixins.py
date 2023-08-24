@@ -152,6 +152,15 @@ class PlotMixin:
 
             logger.info(f'save {path}')
             fig.savefig(path, bbox_inches='tight')
+
+
+class GridPlotMixin(PlotMixin):
+
+    colors = [
+        '#1f77b4', '#ff7f0e', '#2ca02c',
+        '#d62728', '#9467bd', '#8c564b',
+        '#e377c2', '#bcbd22', '#17becf'
+    ]
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
     markers = ['.', '*', 'D', 's']
 
@@ -163,7 +172,6 @@ class PlotMixin:
             self.values = list(self.dimensions.values())
             self.permutations = list(product(*self.values))
             self.styles = self.get_styles()
-
         super().__init__(*args, **kwargs)
 
     def get_figure(self, nrows, ncols, ratio=1):
@@ -335,36 +343,35 @@ class PlotMixin:
 
     def get_ymin(self, subplot, subplots):
         if settings.YMIN is None:
-            return min([
-                sp.df[sp.var].min() for sp in subplots
-                if sp.ifig == subplot.ifig and sp.irow == subplot.irow and sp.icol == subplot.icol
-            ]) * 0.99
+            return min([sp.df[sp.var].min() for sp in subplots
+                        if self.is_in_same_plot(sp, subplot)]) * 0.99
         else:
             return settings.YMIN
 
     def get_ymax(self, subplot, subplots):
         if settings.YMAX is None:
-            return max([
-                sp.df[sp.var].max() for sp in subplots
-                if sp.ifig == subplot.ifig and sp.irow == subplot.irow and sp.icol == subplot.icol
-            ]) * 1.01
+            return max([sp.df[sp.var].max() for sp in subplots
+                        if self.is_in_same_plot(sp, subplot)]) * 1.01
         else:
             return settings.YMAX
 
     def get_vmin(self, subplot, subplots):
         if settings.VMIN is None:
-            return min([
-                sp.df[sp.var].min() for sp in subplots
-                if sp.ifig == subplot.ifig and sp.irow == subplot.irow and sp.icol == subplot.icol
-            ])
+            return min([sp.df[sp.var].min() for sp in subplots
+                        if self.is_in_same_plot(sp, subplot)])
         else:
             return settings.VMIN
 
     def get_vmax(self, subplot, subplots):
         if settings.VMAX is None:
-            return max([
-                sp.df[sp.var].max() for sp in subplots
-                if sp.ifig == subplot.ifig and sp.irow == subplot.irow and sp.icol == subplot.icol
-            ])
+            return max([sp.df[sp.var].max() for sp in subplots
+                        if self.is_in_same_plot(sp, subplot)])
         else:
             return settings.VMAX
+
+    def is_in_same_plot(self, sp, subplot):
+        return (
+            not settings.ROW_RANGES or (sp.irow == subplot.irow)
+        ) and (
+            not settings.COLUMN_RANGES or (sp.icol == subplot.icol)
+        )

@@ -59,6 +59,11 @@ def get_parser():
     parser.add_argument('--cmap', dest='cmap', default='viridis',
                         help='Colormap to use for maps.')
 
+    parser.add_argument('--row-ranges', dest='row_ranges', action='store_true', default=False,
+                        help='Compute seperate plot ranges for each row.')
+    parser.add_argument('--column-ranges', dest='column_ranges', action='store_true', default=False,
+                        help='Compute seperate plot ranges for each column.')
+
     parser.add_argument('--protocol-location', dest='protocol_locations',
                         default='https://protocol.isimip.org https://protocol2.isimip.org',
                         help='URL or file path to the protocol')
