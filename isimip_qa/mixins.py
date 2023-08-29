@@ -12,9 +12,8 @@ import xarray as xr
 from isimip_utils.fetch import fetch_file
 
 from .config import settings
-from .models import Subplot
-
 from .exceptions import ExtractionNotFound
+from .models import Subplot
 
 logger = logging.getLogger(__name__)
 
@@ -72,8 +71,8 @@ class CSVExtractionMixin:
         # read the dataframe from the csv
         try:
             df = pd.read_csv(path)
-        except FileNotFoundError:
-            raise ExtractionNotFound
+        except FileNotFoundError as e:
+            raise ExtractionNotFound from e
 
         if 'time' in df:
             # parse the time axis of the dataframe

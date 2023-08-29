@@ -35,7 +35,8 @@ class YearlyAssessment(GridPlotMixin, Assessment):
             ymax = self.get_ymax(sp, subplots)
 
             if sp.primary:
-                ax.step(sp.df.index, sp.df[sp.var], where='mid', color=sp.color, linestyle=sp.linestyle, label=sp.label, zorder=10)
+                ax.step(sp.df.index, sp.df[sp.var], where='mid', color=sp.color,
+                        linestyle=sp.linestyle, label=sp.label, zorder=10)
                 if sp.label:
                     ax.legend(loc='lower left').set_zorder(20)
             else:

@@ -1,5 +1,5 @@
-from collections import defaultdict
 import logging
+from collections import defaultdict
 
 from ..mixins import ConcatExtractionMixin, CSVExtractionMixin, RemoteExtractionMixin
 from ..models import Extraction

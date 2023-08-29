@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 import xarray as xr
+
 from isimip_utils.patterns import match_dataset_path
 
 from .config import settings
@@ -9,7 +10,7 @@ from .config import settings
 logger = logging.getLogger(__name__)
 
 
-class Dataset(object):
+class Dataset:
 
     def __init__(self, dataset_path):
         self.path, self.specifiers = match_dataset_path(settings.PATTERN, Path(dataset_path))
@@ -24,10 +25,10 @@ class Dataset(object):
             last = (index == len(glob) - 1)
             self.files.append(File(file_path, index, first, last))
 
-    def replace_name(self, **specifiers):
+    def replace_name(self, **replacements):
         if self.path:
             name = self.path.name
-            for identifier, specifiers in specifiers.items():
+            for identifier, specifiers in replacements.items():
                 old = self.specifiers.get(identifier)
                 new = '+'.join(specifiers) if isinstance(specifiers, list) else specifiers
                 if old is not None:
@@ -37,7 +38,7 @@ class Dataset(object):
             return self.path.parent / name
 
 
-class File(object):
+class File:
 
     def __init__(self, file_path, index, first, last):
         self.path = file_path
@@ -61,7 +62,7 @@ class File(object):
         self.ds.close()
 
 
-class Region(object):
+class Region:
 
     def __init__(self, **kwargs):
         self.type = kwargs['type']
@@ -77,7 +78,7 @@ class Region(object):
             self.mask = settings.MASKS[kwargs['mask_path']][kwargs['mask_variable']]
 
 
-class Mask(object):
+class Mask:
 
     def __init__(self, mask_path):
         self.ds = xr.load_dataset(settings.DATASETS_PATH / mask_path)
@@ -86,7 +87,7 @@ class Mask(object):
         return self.ds[item]
 
 
-class Extraction(object):
+class Extraction:
 
     region_types = None
 
@@ -109,7 +110,7 @@ class Extraction(object):
         return self.region_types is None or region.type in self.region_types
 
 
-class Assessment(object):
+class Assessment:
 
     extractions = None
     region_types = None
@@ -127,7 +128,7 @@ class Assessment(object):
         return self.region_types is None or region.type in self.region_types
 
 
-class Subplot(object):
+class Subplot:
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
             setattr(self, key, value)

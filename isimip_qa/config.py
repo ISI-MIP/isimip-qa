@@ -5,8 +5,7 @@ from pathlib import Path
 
 from isimip_utils.config import Settings as BaseSettings
 from isimip_utils.decorators import cached_property
-from isimip_utils.fetch import (fetch_definitions, fetch_pattern, fetch_schema,
-                                fetch_tree)
+from isimip_utils.fetch import fetch_definitions, fetch_pattern, fetch_schema, fetch_tree
 
 
 class Settings(BaseSettings):
@@ -35,7 +34,7 @@ class Settings(BaseSettings):
             datasets = []
             placeholder_permutations = list(product(*self.PLACEHOLDERS.values()))
             for permutations in placeholder_permutations:
-                placeholders = {key: value for key, value in zip(self.PLACEHOLDERS.keys(), permutations)}
+                placeholders = dict(zip(self.PLACEHOLDERS.keys(), permutations))
                 path_str = str(self.PATH).format(**placeholders)
                 path = Path(path_str)
                 path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
