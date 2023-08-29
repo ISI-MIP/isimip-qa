@@ -9,12 +9,25 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+from isimip_utils.fetch import fetch_file
+
 from .config import settings
 from .models import Subplot
 
 from .exceptions import ExtractionNotFound
 
 logger = logging.getLogger(__name__)
+
+
+class RemoteExtractionMixin:
+
+    def fetch(self, dataset, region):
+        path = self.get_path(dataset, region)
+        file_content = fetch_file(settings.EXTRACTIONS_LOCATIONS, path.relative_to(settings.EXTRACTIONS_PATH))
+        if file_content is not None:
+            path.parent.mkdir(exist_ok=True, parents=True)
+            path.open('wb').write(file_content)
+            return path
 
 
 class CSVExtractionMixin:

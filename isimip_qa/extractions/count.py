@@ -1,12 +1,12 @@
 import logging
 
-from ..mixins import CSVExtractionMixin
+from ..mixins import CSVExtractionMixin, RemoteExtractionMixin
 from ..models import Extraction
 
 logger = logging.getLogger(__name__)
 
 
-class CountExtraction(CSVExtractionMixin, Extraction):
+class CountExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
 
     specifier = 'count'
     region_types = ['global', 'mask']

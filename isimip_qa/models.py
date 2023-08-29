@@ -93,6 +93,9 @@ class Extraction(object):
     def extract(self, dataset, region, file):
         raise NotImplementedError
 
+    def fetch(self, dataset, region):
+        raise NotImplementedError
+
     def exists(self, dataset, region):
         raise NotImplementedError
 
@@ -101,6 +104,9 @@ class Extraction(object):
 
     def read(self, dataset, region):
         raise NotImplementedError
+
+    def has_region(self, region):
+        return self.region_types is None or region.type in self.region_types
 
 
 class Assessment(object):
@@ -113,6 +119,12 @@ class Assessment(object):
 
     def plot(self, extraction, region):
         raise NotImplementedError
+
+    def has_extraction(self, extraction):
+        return self.extractions is None or extraction.specifier in self.extractions
+
+    def has_region(self, region):
+        return self.region_types is None or region.type in self.region_types
 
 
 class Subplot(object):

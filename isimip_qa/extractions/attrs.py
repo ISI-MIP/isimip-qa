@@ -1,12 +1,12 @@
 import logging
 
-from ..mixins import JSONExtractionMixin
+from ..mixins import JSONExtractionMixin, RemoteExtractionMixin
 from ..models import Extraction
 
 logger = logging.getLogger(__name__)
 
 
-class AttrsExtraction(JSONExtractionMixin, Extraction):
+class AttrsExtraction(JSONExtractionMixin, RemoteExtractionMixin, Extraction):
 
     specifier = 'attrs'
     region_types = ['global', 'mask', 'point']

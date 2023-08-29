@@ -81,6 +81,10 @@ class Settings(BaseSettings):
         return self.args.get('PRIMARY').split(',') if self.args.get('PRIMARY') else []
 
     @cached_property
+    def EXTRACTIONS_LOCATIONS(self):
+        return self.args.get('EXTRACTIONS_LOCATIONS').split()
+
+    @cached_property
     def DEFINITIONS(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
         return fetch_definitions(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)

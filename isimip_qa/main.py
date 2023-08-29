@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def get_parser():
     parser = ArgumentParser(prog='isimip-qa')
 
-    parser.add_argument('path', help='Path of the dataset to process, can contain placeholders for specifiers, e.g. {model}')
+    parser.add_argument('path', help='Path of the dataset to process, can contain placeholders, e.g. {model}')
     parser.add_argument('placeholders', nargs='*',
                         help='Values for the placeholders in the from placeholder=value1,value2,...')
 
@@ -42,6 +42,9 @@ def get_parser():
                         help='Load NetCDF datasets completely in memory')
     parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,
                         help='Run only assessments')
+    parser.add_argument('--extractions-locations', dest='extractions_locations',
+                        default='https://files.isimip.org/qa/extractions/',
+                        help='URL or file path to the locations of extractions to fetch')
     parser.add_argument('--assessments-only', dest='assessments_only', action='store_true', default=False,
                         help='Run only assessments')
     parser.add_argument('--assessments-format', dest='assessments_format', default='png',
@@ -120,37 +123,30 @@ def main():
 
     # run the extractions
     if not settings.ASSESSMENTS_ONLY:
+        # check if the extractions are already complete
+        missing = set()
         for dataset in datasets:
-            # check if the extraction is already complete
-            if settings.FORCE:
-                is_complete = False
-            else:
-                is_complete = True
+            for extraction in extractions:
+                for region in regions:
+                    if extraction.has_region(region):
+                        if not (extraction.exists(dataset, region) or extraction.fetch(dataset, region)):
+                            missing.add((extraction, region))
+
+        if settings.FORCE or missing:
+            # if at least one extraction is not complete, perform extractions file by file
+            for file in dataset.files:
+                file.open()
                 for extraction in extractions:
                     for region in regions:
-                        if extraction.region_types is None \
-                                    or region.type in extraction.region_types:
-                            is_complete &= extraction.exists(dataset, region)
-
-            if not is_complete:
-                for file in dataset.files:
-                    file.open()
-                    for extraction in extractions:
-                        for region in regions:
-                            if extraction.region_types is None \
-                                    or region.type in extraction.region_types:
-                                extraction.extract(dataset, region, file)
-                    file.close()
+                        if (extraction, region) in missing:
+                            extraction.extract(dataset, region, file)
+                file.close()
 
     # run the assessments
     if not settings.EXTRACTIONS_ONLY:
         for assessment in assessments:
             for extraction in extractions:
-                if assessment.extractions is None \
-                        or extraction.specifier in assessment.extractions:
+                if assessment.has_extraction(extraction):
                     for region in regions:
-                        if extraction.region_types is None \
-                                or region.type in extraction.region_types:
-                            if assessment.region_types is None \
-                                    or region.type in assessment.region_types:
-                                assessment.plot(extraction, region)
+                        if extraction.has_region(region) and assessment.has_region(region):
+                            assessment.plot(extraction, region)

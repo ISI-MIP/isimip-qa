@@ -1,12 +1,12 @@
 import logging
 
-from ..mixins import ConcatExtractionMixin, CSVExtractionMixin
+from ..mixins import ConcatExtractionMixin, CSVExtractionMixin, RemoteExtractionMixin
 from ..models import Extraction
 
 logger = logging.getLogger(__name__)
 
 
-class MeanMapExtraction(ConcatExtractionMixin, CSVExtractionMixin, Extraction):
+class MeanMapExtraction(ConcatExtractionMixin, CSVExtractionMixin, RemoteExtractionMixin, Extraction):
 
     specifier = 'countmap'
     region_types = ['global', 'mask']
