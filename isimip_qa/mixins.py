@@ -205,12 +205,12 @@ class GridPlotMixin(PlotMixin):
             # apply placeholders
             name = name.format(**placeholders)
 
-            # overwrite _global_ with the region, this is not very elegant,
-            # but after a lot (!) of experiments, this is the best solution ...
-            name = name.replace('_global_', '_' + region.specifier + '_')
+        # overwrite _global_ with the region, this is not very elegant,
+        # but after a lot (!) of experiments, this is the best solution ...
+        name = name.replace('_global_', '_' + region.specifier + '_')
 
-            # add the extration and the assessment specifiers
-            name = name + '_' + extraction.specifier + '_' + self.specifier
+        # add the extration and the assessment specifiers
+        name = name + '_' + extraction.specifier + '_' + self.specifier
 
         return settings.ASSESSMENTS_PATH / name
 
