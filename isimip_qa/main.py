@@ -123,24 +123,25 @@ def main():
 
     # run the extractions
     if not settings.ASSESSMENTS_ONLY:
-        # check if the extractions are already complete
-        missing = set()
         for dataset in datasets:
-            for extraction in extractions:
-                for region in regions:
-                    if extraction.has_region(region):
-                        if not (extraction.exists(dataset, region) or extraction.fetch(dataset, region)):
-                            missing.add((extraction, region))
-
-        if settings.FORCE or missing:
-            # if at least one extraction is not complete, perform extractions file by file
-            for file in dataset.files:
-                file.open()
+            missing = set()
+            if not settings.FORCE:
+                # check if the extractions are already complete or if there some missing
                 for extraction in extractions:
                     for region in regions:
-                        if (extraction, region) in missing:
-                            extraction.extract(dataset, region, file)
-                file.close()
+                        if extraction.has_region(region):
+                            if not (extraction.exists(dataset, region) or extraction.fetch(dataset, region)):
+                                missing.add((extraction, region))
+
+            if settings.FORCE or missing:
+                # if at least one extraction is not complete, perform extractions file by file
+                for file in dataset.files:
+                    file.open()
+                    for extraction in extractions:
+                        for region in regions:
+                            if settings.FORCE or (extraction, region) in missing:
+                                extraction.extract(dataset, region, file)
+                    file.close()
 
     # run the assessments
     if not settings.EXTRACTIONS_ONLY:
