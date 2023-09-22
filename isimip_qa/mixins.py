@@ -38,19 +38,27 @@ class CSVExtractionMixin:
     def exists(self, dataset, region):
         return self.get_path(dataset, region).exists()
 
-    def write(self, ds, path, first):
-        if len(ds.dims) == 3:
-            dim_order = ('lon', 'lat', 'time')
-        elif len(ds.dims) == 2:
-            dim_order = ('lon', 'lat')
+    def write(self, data, path, first):
+        if isinstance(data, xr.core.dataset.Dataset):
+            # this is a xarray dataset, so we convert it to a dataframe
+            ds = data
+            if set(ds.dims) == {'lon', 'lat', 'time'}:
+                dim_order = ('lon', 'lat', 'time')
+            elif set(ds.dims) == {'lon', 'lat'}:
+                dim_order = ('lon', 'lat')
+            else:
+                dim_order = tuple(ds.dims)
+
+            df = ds.to_dataframe(dim_order=dim_order)
         else:
-            dim_order = ('time', )
+            # this is a pandas dataframe
+            df = data
 
         if first:
             path.parent.mkdir(exist_ok=True, parents=True)
-            ds.to_dataframe(dim_order=dim_order).to_csv(path)
+            df.to_csv(path)
         else:
-            ds.to_dataframe(dim_order=dim_order).to_csv(path, mode='a', header=False)
+            df.to_csv(path, mode='a', header=False)
 
     def read(self, dataset, region):
         # pandas cannot handle datetimes before 1677-09-22 so we need to
