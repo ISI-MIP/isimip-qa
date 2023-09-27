@@ -47,7 +47,7 @@ def get_parser():
                         help='URL or file path to the locations of extractions to fetch')
     parser.add_argument('--assessments-only', dest='assessments_only', action='store_true', default=False,
                         help='Run only assessments')
-    parser.add_argument('--assessments-format', dest='assessments_format', default='png',
+    parser.add_argument('--assessments-format', dest='assessments_format', default='svg',
                         help='File format for assessment plots [default: png].')
 
     parser.add_argument('--ymin', type=float, dest='ymin', default=None,
