@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+import cftime
 import xarray as xr
 
 from isimip_utils.patterns import match_dataset_path
@@ -54,6 +55,12 @@ class File:
         except ValueError:
             # workaround for non standard times (e.g. growing seasons)
             self.ds = xr.open_dataset(self.path, chunks={'time': 'auto'}, decode_times=False)
+
+            if self.ds['time'].units.startswith('growing seasons'):
+                units = self.ds['time'].units.replace('growing seasons', 'common_years')
+                times = cftime.num2date(self.ds['time'], units, calendar='365_day')
+
+                self.ds['time'] = times
 
         if settings.LOAD:
             self.ds.load()
