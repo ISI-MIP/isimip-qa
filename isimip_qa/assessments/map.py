@@ -31,10 +31,10 @@ class MapAssessment(GridPlotMixin, Assessment):
         lonmin, lonmax, latmin, latmax, ratio = -180, 180, -90, 90, 3.0
         if region.specifier != 'global':
             for sp in subplots:
-                lonmin = max(lonmin, sp.df.where(pd.notnull(sp.df[sp.df.columns[-1]]))['lon'].min())
-                lonmax = min(lonmax, sp.df.where(pd.notnull(sp.df[sp.df.columns[-1]]))['lon'].max())
-                latmin = max(latmin, sp.df.where(pd.notnull(sp.df[sp.df.columns[-1]]))['lat'].min())
-                latmax = min(latmax, sp.df.where(pd.notnull(sp.df[sp.df.columns[-1]]))['lat'].max())
+                lonmin = max(lonmin, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lon'].min())
+                lonmax = min(lonmax, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lon'].max())
+                latmin = max(latmin, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lat'].min())
+                latmax = min(latmax, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lat'].max())
             ratio = max((lonmax - lonmin) / (latmax - latmin), 1.0)
 
         nfigs, nrows, ncols = self.get_grid(figs=True)
