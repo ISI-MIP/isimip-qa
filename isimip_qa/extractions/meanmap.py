@@ -21,9 +21,9 @@ class MeanMapExtraction(ConcatExtractionMixin, CSVExtractionMixin, RemoteExtract
         logger.info(f'extract {region.specifier} {self.specifier} from {file.path}')
 
         if region.type == 'mask':
-            ds = file.ds.where(region.mask == 1).sum(dim=('time',), min_count=1)
+            ds = file.ds.where(region.mask == 1).sum(dim=('time',), skipna=True, min_count=1)
         else:
-            ds = file.ds.sum(dim=('time',), min_count=1)
+            ds = file.ds.sum(dim=('time',), skipna=True, min_count=1)
 
         n = len(file.ds.time)
 
