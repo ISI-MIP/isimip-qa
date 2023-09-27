@@ -1,5 +1,4 @@
 from collections import defaultdict
-from datetime import datetime
 from itertools import product
 from pathlib import Path
 
@@ -15,6 +14,16 @@ class Settings(BaseSettings):
 
         # create a dict to store masks
         self.MASKS = {}
+
+        # check if all placeholders are there
+        if self.PATH and self.PLACEHOLDERS:
+            permutations = next(product(*self.PLACEHOLDERS.values()))
+            placeholders = dict(zip(self.PLACEHOLDERS.keys(), permutations))
+
+            try:
+                str(self.PATH).format(**placeholders)
+            except KeyError as e:
+                raise RuntimeError('Some of the placeholders are missing.') from e
 
     @cached_property
     def PATH(self):
@@ -101,17 +110,6 @@ class Settings(BaseSettings):
     def TREE(self):
         assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
         return fetch_tree(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
-
-    def parse_time(self, time):
-        try:
-            datetime.strptime(time, '%Y-%m-%d')
-        except ValueError:
-            try:
-                datetime.strptime(time, '%Y')
-            except ValueError:
-                self.parser.error('TIMES need to provided as "%Y-%m-%d" or "%Y".')
-
-        return time
 
 
 settings = Settings()
