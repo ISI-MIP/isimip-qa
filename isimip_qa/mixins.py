@@ -24,6 +24,7 @@ class RemoteExtractionMixin:
         path = self.get_path(dataset, region)
         file_content = fetch_file(settings.EXTRACTIONS_LOCATIONS, path.relative_to(settings.EXTRACTIONS_PATH))
         if file_content is not None:
+            logger.info('fetch %s', path)
             path.parent.mkdir(exist_ok=True, parents=True)
             path.open('wb').write(file_content)
             return path
@@ -197,7 +198,7 @@ class GridPlotMixin(PlotMixin):
         return fig, axs
 
     def get_path(self, extraction, region, ifig=None):
-        name = settings.PATH.name
+        name = settings.PATHS[0].with_suffix('').name
 
         if self.dimensions:
             placeholders = {}
@@ -298,7 +299,10 @@ class GridPlotMixin(PlotMixin):
 
     def get_subplots(self, extraction, region):
         subplots = []
-        for index, dataset in enumerate(self.datasets):
+        for dataset_index, dataset in enumerate(self.datasets):
+            # adjust the index when using multiple PATHS as input
+            index = dataset_index % len(self.permutations)
+
             ifig, irow, icol = self.get_grid_indexes(index)
 
             try:

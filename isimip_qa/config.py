@@ -4,7 +4,6 @@ from pathlib import Path
 
 from isimip_utils.config import Settings as BaseSettings
 from isimip_utils.decorators import cached_property
-from isimip_utils.fetch import fetch_definitions, fetch_pattern, fetch_schema, fetch_tree
 
 
 class Settings(BaseSettings):
@@ -16,18 +15,19 @@ class Settings(BaseSettings):
         self.MASKS = {}
 
         # check if all placeholders are there
-        if self.PATH and self.PLACEHOLDERS:
-            permutations = next(product(*self.PLACEHOLDERS.values()))
-            placeholders = dict(zip(self.PLACEHOLDERS.keys(), permutations))
+        if self.PATHS and self.PLACEHOLDERS:
+            for path in self.PATHS:
+                permutations = next(product(*self.PLACEHOLDERS.values()))
+                placeholders = dict(zip(self.PLACEHOLDERS.keys(), permutations))
 
-            try:
-                str(self.PATH).format(**placeholders)
-            except KeyError as e:
-                raise RuntimeError('Some of the placeholders are missing.') from e
+                try:
+                    str(path).format(**placeholders)
+                except KeyError as e:
+                    raise RuntimeError('Some of the placeholders are missing.') from e
 
     @cached_property
-    def PATH(self):
-        return Path(self.args['PATH']).expanduser()
+    def PATHS(self):
+        return [Path(path).expanduser() for path in self.args['PATHS']]
 
     @cached_property
     def PLACEHOLDERS(self):
@@ -42,12 +42,14 @@ class Settings(BaseSettings):
         if self.PLACEHOLDERS:
             datasets = []
             placeholder_permutations = list(product(*self.PLACEHOLDERS.values()))
-            for permutations in placeholder_permutations:
-                placeholders = dict(zip(self.PLACEHOLDERS.keys(), permutations))
-                path_str = str(self.PATH).format(**placeholders)
-                path = Path(path_str)
-                path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
-                datasets.append(path)
+
+            for input_path in self.PATHS:
+                for permutations in placeholder_permutations:
+                    placeholders = dict(zip(self.PLACEHOLDERS.keys(), permutations))
+                    path_str = str(input_path).format(**placeholders)
+                    path = Path(path_str)
+                    path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
+                    datasets.append(path)
 
             return datasets
         else:

@@ -6,6 +6,7 @@ from .assessments import assessment_classes
 from .config import settings
 from .extractions import extraction_classes
 from .models import Dataset, Region
+from .parser import ArgumentAction
 from .regions import regions_list
 
 logger = logging.getLogger(__name__)
@@ -14,8 +15,9 @@ logger = logging.getLogger(__name__)
 def get_parser():
     parser = ArgumentParser(prog='isimip-qa')
 
-    parser.add_argument('path', help='Path of the dataset to process, can contain placeholders, e.g. {model}')
-    parser.add_argument('placeholders', nargs='*',
+    parser.add_argument('paths', nargs='*', action=ArgumentAction,
+                        help='Paths of the datasets to process, can contain placeholders, e.g. {model}')
+    parser.add_argument('placeholders', nargs='*', action=ArgumentAction,
                         help='Values for the placeholders in the from placeholder=value1,value2,...')
 
     parser.add_argument('--datasets-path', dest='datasets_path',
