@@ -54,13 +54,6 @@ class Settings(BaseSettings):
             return [self.PATH]
 
     @cached_property
-    def PROTOCOL_PATH(self):
-        try:
-            return Path(self.args['PROTOCOL_PATH']).expanduser()
-        except KeyError:
-            return self.PATH
-
-    @cached_property
     def DATASETS_PATH(self):
         return Path(self.args['DATASETS_PATH']).expanduser()
 
@@ -91,25 +84,6 @@ class Settings(BaseSettings):
     @cached_property
     def EXTRACTIONS_LOCATIONS(self):
         return self.args.get('EXTRACTIONS_LOCATIONS').split()
-
-    @cached_property
-    def DEFINITIONS(self):
-        assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_definitions(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
-
-    @cached_property
-    def PATTERN(self):
-        return fetch_pattern(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
-
-    @cached_property
-    def SCHEMA(self):
-        assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_schema(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
-
-    @cached_property
-    def TREE(self):
-        assert self.PROTOCOL_LOCATIONS is not None, 'PROTOCOL_LOCATIONS is not set'
-        return fetch_tree(self.PROTOCOL_LOCATIONS.split(), self.PROTOCOL_PATH)
 
 
 settings = Settings()

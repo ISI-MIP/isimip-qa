@@ -1,6 +1,5 @@
 import logging
 
-from isimip_utils.exceptions import DidNotMatch
 from isimip_utils.parser import ArgumentParser
 
 from .assessments import assessment_classes
@@ -95,11 +94,7 @@ def main():
     # create list of datasets
     datasets = []
     for path in settings.DATASETS:
-        try:
-            dataset = Dataset(path)
-            datasets.append(dataset)
-        except DidNotMatch as e:
-            parser.error(e)
+        datasets.append(Dataset(path))
 
     # create list of regions
     regions = [

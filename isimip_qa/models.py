@@ -4,8 +4,6 @@ from pathlib import Path
 import cftime
 import xarray as xr
 
-from isimip_utils.patterns import match_dataset_path
-
 from .config import settings
 
 logger = logging.getLogger(__name__)
@@ -14,8 +12,7 @@ logger = logging.getLogger(__name__)
 class Dataset:
 
     def __init__(self, dataset_path):
-        self.path, self.specifiers = match_dataset_path(settings.PATTERN, Path(dataset_path))
-        logger.info('match %s', self.path)
+        self.path = Path(dataset_path).with_suffix('')
 
         # find files for dataset
         self.files = []
@@ -26,16 +23,17 @@ class Dataset:
             last = (index == len(glob) - 1)
             self.files.append(File(file_path, index, first, last))
 
+    def  __repr__(self):
+        return str(self.path)
+
     def replace_name(self, **replacements):
         if self.path:
             name = self.path.name
-            for identifier, specifiers in replacements.items():
-                old = self.specifiers.get(identifier)
-                new = '+'.join(specifiers) if isinstance(specifiers, list) else specifiers
-                if old is not None:
-                    name = name.replace(old.lower(), new.lower())
+            for key, value in replacements.items():
+                if key == 'region' and '_global_' in name:
+                    name = name.replace('_global_', f'_{value}_')
                 else:
-                    name = name + '_' + new
+                    name = name + '_' + value
             return self.path.parent / name
 
 
