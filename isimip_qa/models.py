@@ -135,13 +135,17 @@ class Extraction:
 
 class Assessment:
 
-    extractions = None
+    extraction_classes = None
     region_types = None
+    period_types = None
 
-    def __init__(self, datasets, **kwargs):
+    def __init__(self, extraction_class, datasets, region, period, **kwargs):
+        self.extraction_class = extraction_class
         self.datasets = datasets
+        self.region = region
+        self.period = period
 
-    def plot(self, extraction, region):
+    def plot(self):
         raise NotImplementedError
 
     @classmethod

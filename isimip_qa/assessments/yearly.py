@@ -14,16 +14,17 @@ class YearlyAssessment(GridPlotMixin, Assessment):
     specifier = 'yearly'
     extractions = ['mean']
 
-    def get_df(self, extraction, dataset, region):
-        return extraction.read(dataset, region).groupby(lambda x: x.year).mean()
+    def get_df(self, dataset):
+        extraction = self.extraction_class(dataset, self.region, self.period)
+        return extraction.read().groupby(lambda x: x.year).mean()
 
-    def get_attrs(self, extraction, dataset, region):
-        return AttrsExtraction().read(dataset, region)
+    def get_attrs(self, dataset):
+        return AttrsExtraction(dataset, self.region, self.period).read()
 
-    def plot(self, extraction, region):
-        logger.info(f'plot {extraction.specifier} {region.specifier}')
+    def plot(self):
+        logger.info(f'plot {self.extraction_class.specifier} {self.specifier} {self.region.specifier}')
 
-        subplots = self.get_subplots(extraction, region)
+        subplots = self.get_subplots()
 
         nrows, ncols = self.get_grid()
         fig, axs = self.get_figure(nrows, ncols)
@@ -49,7 +50,6 @@ class YearlyAssessment(GridPlotMixin, Assessment):
             ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
         if subplots:
-            path = self.get_path(extraction, region)
-            self.save_figure(fig, path)
+            self.save_figure(fig, self.get_path())
 
         plt.close()

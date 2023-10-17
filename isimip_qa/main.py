@@ -2,6 +2,7 @@ import logging
 
 from isimip_utils.parser import ArgumentParser
 
+from .assessments import assessment_classes
 from .config import settings
 from .extractions import extraction_classes
 from .models import Dataset, Period, Region
@@ -132,11 +133,24 @@ def main():
                         extraction.extract(file)
                     file.close()
 
-    # # run the assessments
-    # if not settings.EXTRACTIONS_ONLY:
-    #     for assessment in assessments:
-    #         for extraction in extractions:
-    #             if assessment.has_extraction(extraction):
-    #                 for region in regions:
-    #                     if extraction.has_region(region) and assessment.has_region(region):
-    #                         assessment.plot(extraction, region)
+    # run the assessments
+    if not settings.EXTRACTIONS_ONLY:
+        for assessment_class in assessment_classes:
+            for region in regions:
+                for period in periods:
+                    for extraction_class in extraction_classes:
+                        if (
+                            (settings.EXTRACTIONS is None or extraction_class.specifier in settings.EXTRACTIONS)
+                            and extraction_class.has_region(region)
+                            and extraction_class.has_period(period)
+                        ):
+                            if (
+                                (settings.ASSESSMENTS is None or assessment_class.specifier in settings.ASSESSMENTS)
+                                and assessment_class.has_extraction(extraction_class)
+                                and extraction_class.has_region(region)
+                                and extraction_class.has_period(period)
+                            ):
+                                assessment = assessment_class(extraction_class, datasets, region, period,
+                                                              dimensions=settings.PLACEHOLDERS, grid=settings.GRID,
+                                                              save=True)
+                                assessment.plot()

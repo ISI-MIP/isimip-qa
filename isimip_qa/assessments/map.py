@@ -16,20 +16,21 @@ class MapAssessment(GridPlotMixin, Assessment):
     specifier = 'map'
     extractions = ['meanmap', 'countmap']
 
-    def get_df(self, extraction, dataset, region):
-        return extraction.read(dataset, region)
+    def get_df(self, dataset):
+        extraction = self.extraction_class(dataset, self.region, self.period)
+        return extraction.read()
 
-    def get_attrs(self, extraction, dataset, region):
-        return AttrsExtraction().read(dataset, region)
+    def get_attrs(self, dataset):
+        return AttrsExtraction(dataset, self.region, self.period).read()
 
-    def plot(self, extraction, region):
-        logger.info(f'plot {extraction.specifier} {region.specifier}')
+    def plot(self):
+        logger.info(f'plot {self.extraction_class.specifier} {self.specifier} {self.region.specifier}')
 
-        subplots = self.get_subplots(extraction, region)
+        subplots = self.get_subplots()
 
         # get the extension of the valid data for all datasets
         lonmin, lonmax, latmin, latmax, ratio = -180, 180, -90, 90, 3.0
-        if region.specifier != 'global':
+        if self.region.specifier != 'global':
             for sp in subplots:
                 lonmin = max(lonmin, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lon'].min())
                 lonmax = min(lonmax, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lon'].max())
@@ -75,7 +76,6 @@ class MapAssessment(GridPlotMixin, Assessment):
                     cbars.append(ax)
 
             if fig_subplots:
-                path = self.get_path(extraction, region, ifig)
-                self.save_figure(fig, path)
+                self.save_figure(fig, self.get_path(ifig))
 
             plt.close()

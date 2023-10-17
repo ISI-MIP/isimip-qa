@@ -4,6 +4,8 @@ import logging
 from itertools import product
 
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import xarray as xr
 
 from isimip_utils.fetch import fetch_file
@@ -55,33 +57,30 @@ class CSVExtractionMixin:
             self.path.parent.mkdir(exist_ok=True, parents=True)
             df.to_csv(self.path)
 
-    # def read(self, dataset, region):
-    #     # pandas cannot handle datetimes before 1677-09-22 so we need to
-    #     # manually set every timestamp before to None using a custom date_parser
-    #     def parse_time(time):
-    #         try:
-    #             return pd.Timestamp(np.datetime64(time))
-    #         except pd.errors.OutOfBoundsDatetime:
-    #             return pd.NaT
+    def read(self):
+        # pandas cannot handle datetimes before 1677-09-22 so we need to
+        # manually set every timestamp before to None using a custom date_parser
+        def parse_time(time):
+            try:
+                return pd.Timestamp(np.datetime64(time))
+            except pd.errors.OutOfBoundsDatetime:
+                return pd.NaT
 
-    #     # get the csv_path
-    #     path = self.get_path(dataset, region)
+        # read the dataframe from the csv
+        try:
+            df = pd.read_csv(self.path)
+        except FileNotFoundError as e:
+            raise ExtractionNotFound from e
 
-    #     # read the dataframe from the csv
-    #     try:
-    #         df = pd.read_csv(path)
-    #     except FileNotFoundError as e:
-    #         raise ExtractionNotFound from e
+        if 'time' in df:
+            # parse the time axis of the dataframe
+            df['time'] = df['time'].apply(parse_time)
 
-    #     if 'time' in df:
-    #         # parse the time axis of the dataframe
-    #         df['time'] = df['time'].apply(parse_time)
+            # remove all values without time
+            df = df[df.time.notnull()]
+            df.set_index('time', inplace=True)
 
-    #         # remove all values without time
-    #         df = df[df.time.notnull()]
-    #         df.set_index('time', inplace=True)
-
-    #     return df
+        return df
 
 
 class JSONExtractionMixin:
@@ -96,9 +95,8 @@ class JSONExtractionMixin:
         self.path.parent.mkdir(exist_ok=True, parents=True)
         json.dump(data, self.path.open('w'))
 
-    # def read(self, dataset, region):
-    #     path = self.get_path(dataset, region)
-    #     return json.load(path.open())
+    def read(self):
+        return json.load(self.path.open())
 
 
 class PlotMixin:
@@ -142,7 +140,7 @@ class GridPlotMixin(PlotMixin):
             ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
         return fig, axs
 
-    def get_path(self, extraction, region, ifig=None):
+    def get_path(self, ifig=None):
         name = settings.PATHS[0].with_suffix('').name
 
         if self.dimensions:
@@ -169,10 +167,10 @@ class GridPlotMixin(PlotMixin):
 
         # overwrite _global_ with the region, this is not very elegant,
         # but after a lot (!) of experiments, this is the best solution ...
-        name = name.replace('_global_', '_' + region.specifier + '_')
+        name = name.replace('_global_', '_' + self.region.specifier + '_')
 
         # add the extration and the assessment specifiers
-        name = name + '_' + extraction.specifier + '_' + self.specifier
+        name = name + '_' + self.extraction_class.specifier + '_' + self.specifier
 
         return settings.ASSESSMENTS_PATH / name
 
@@ -242,7 +240,7 @@ class GridPlotMixin(PlotMixin):
         else:
             return True
 
-    def get_subplots(self, extraction, region):
+    def get_subplots(self):
         subplots = []
         for dataset_index, dataset in enumerate(self.datasets):
             # adjust the index when using multiple PATHS as input
@@ -254,12 +252,13 @@ class GridPlotMixin(PlotMixin):
             ifig, irow, icol = self.get_grid_indexes(index)
 
             try:
-                df = self.get_df(extraction, dataset, region)
+                df = self.get_df(dataset)
             except ExtractionNotFound:
                 continue
 
             try:
-                attrs = self.get_attrs(extraction, dataset, region)
+
+                attrs = self.get_attrs(dataset)
             except ExtractionNotFound:
                 attrs = {}
 
@@ -284,6 +283,12 @@ class GridPlotMixin(PlotMixin):
             subplots.append(subplot)
 
         return subplots
+
+    def get_df(self, dataset):
+        raise NotImplementedError
+
+    def get_attrs(self, dataset):
+        raise NotImplementedError
 
     def get_full_title(self, i):
         if self.dimensions:
