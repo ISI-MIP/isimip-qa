@@ -301,7 +301,10 @@ class GridPlotMixin(PlotMixin):
         subplots = []
         for dataset_index, dataset in enumerate(self.datasets):
             # adjust the index when using multiple PATHS as input
-            index = dataset_index % len(self.permutations)
+            if self.dimensions:
+                index = dataset_index % len(self.permutations)
+            else:
+                index = dataset_index
 
             ifig, irow, icol = self.get_grid_indexes(index)
 
