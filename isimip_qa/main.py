@@ -2,10 +2,9 @@ import logging
 
 from isimip_utils.parser import ArgumentParser
 
-from .assessments import assessment_classes
 from .config import settings
 from .extractions import extraction_classes
-from .models import Dataset, Region
+from .models import Dataset, Period, Region
 from .parser import ArgumentAction
 from .regions import regions_list
 
@@ -104,47 +103,40 @@ def main():
         if region['specifier'] in settings.REGIONS
     ]
 
-    # create list of extractions
-    extractions = [
-        extraction_class() for extraction_class in extraction_classes
-        if settings.EXTRACTIONS is None
-        or extraction_class.specifier in settings.EXTRACTIONS
-    ]
-
-    # create list of assessments
-    assessments = [
-        assessment_class(datasets, dimensions=settings.PLACEHOLDERS, grid=settings.GRID, save=True)
-        for assessment_class in assessment_classes
-        if settings.ASSESSMENTS is None or assessment_class.specifier in settings.ASSESSMENTS
+    # create list of times
+    periods = [
+        Period(start_year=1901, end_year=2019)
     ]
 
     # run the extractions
     if not settings.ASSESSMENTS_ONLY:
         for dataset in datasets:
-            missing = set()
-            if not settings.FORCE:
-                # check if the extractions are already complete or if there some missing
-                for extraction in extractions:
-                    for region in regions:
-                        if extraction.has_region(region):
-                            if not (extraction.exists(dataset, region) or extraction.fetch(dataset, region)):
-                                missing.add((extraction, region))
+            extractions = []
+            for region in regions:
+                for period in periods:
+                    for extraction_class in extraction_classes:
+                        if (
+                            (settings.EXTRACTIONS is None or extraction_class.specifier in settings.EXTRACTIONS)
+                            and extraction_class.has_region(region)
+                            and extraction_class.has_period(period)
+                        ):
+                            extraction = extraction_class(dataset, region, period)
+                            if settings.FORCE or (not extraction.exists() and not extraction.fetch()):
+                                extractions.append(extraction)
 
-            if settings.FORCE or missing:
+            if extractions:
                 # if at least one extraction is not complete, perform extractions file by file
                 for file in dataset.files:
                     file.open()
                     for extraction in extractions:
-                        for region in regions:
-                            if settings.FORCE or (extraction, region) in missing:
-                                extraction.extract(dataset, region, file)
+                        extraction.extract(file)
                     file.close()
 
-    # run the assessments
-    if not settings.EXTRACTIONS_ONLY:
-        for assessment in assessments:
-            for extraction in extractions:
-                if assessment.has_extraction(extraction):
-                    for region in regions:
-                        if extraction.has_region(region) and assessment.has_region(region):
-                            assessment.plot(extraction, region)
+    # # run the assessments
+    # if not settings.EXTRACTIONS_ONLY:
+    #     for assessment in assessments:
+    #         for extraction in extractions:
+    #             if assessment.has_extraction(extraction):
+    #                 for region in regions:
+    #                     if extraction.has_region(region) and assessment.has_region(region):
+    #                         assessment.plot(extraction, region)

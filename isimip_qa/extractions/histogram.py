@@ -14,13 +14,13 @@ class HistogramExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction)
     specifier = 'histogram'
     region_types = ['global', 'mask', 'point']
 
-    def extract(self, dataset, region, file):
-        logger.info(f'extract {region.specifier} {self.specifier} from {file.path}')
+    def extract(self, file):
+        logger.info(f'extract {self.region.specifier} {self.specifier} from {file.path}')
 
-        if region.type == 'mask':
-            ds = file.ds.where(region.mask == 1)
-        elif region.type == 'point':
-            ds = file.ds.sel(lat=region.lat, lon=region.lon, method='nearest')
+        if self.region.type == 'mask':
+            ds = file.ds.where(self.region.mask == 1)
+        elif self.region.type == 'point':
+            ds = file.ds.sel(lat=self.region.lat, lon=self.region.lon, method='nearest')
         else:
             ds = file.ds
 
@@ -34,6 +34,11 @@ class HistogramExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction)
             'count': histogram[0]
         }, dtype=np.float64, index=pd.Index(histogram[1][1:], name='bin'))
 
-        path = self.get_path(dataset, region)
-        logger.info(f'write {path}')
-        self.write(df, path, first=file.first)
+        if file.first:
+            self.df = df
+        else:
+            self.df += df
+
+        if file.last:
+            logger.info(f'write {self.path}')
+            self.write(self.df)

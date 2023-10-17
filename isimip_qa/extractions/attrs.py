@@ -11,13 +11,12 @@ class AttrsExtraction(JSONExtractionMixin, RemoteExtractionMixin, Extraction):
     specifier = 'attrs'
     region_types = ['global', 'mask', 'point']
 
-    def extract(self, dataset, region, file):
+    def extract(self, file):
         if file.first:
-            logger.info(f'extract {region.specifier} {self.specifier} from {file.path}')
+            logger.info(f'extract {self.region.specifier} {self.specifier} from {file.path}')
 
             var = next(iter(file.ds.data_vars.values()))
             attrs = var.attrs
 
-            path = self.get_path(dataset, region)
-            logger.info(f'write {path}')
-            self.write(attrs, path)
+            logger.info(f'write {self.path}')
+            self.write(attrs)

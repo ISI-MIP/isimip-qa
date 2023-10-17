@@ -82,6 +82,12 @@ class Region:
                 settings.MASKS[kwargs['mask_path']] = Mask(kwargs['mask_path'])
             self.mask = settings.MASKS[kwargs['mask_path']][kwargs['mask_variable']]
 
+class Period:
+
+    def __init__(self, **kwargs):
+        self.start_year = kwargs['start_year']
+        self.end_year = kwargs['end_year']
+
 
 class Mask:
 
@@ -95,24 +101,36 @@ class Mask:
 class Extraction:
 
     region_types = None
+    period_types = None
 
-    def extract(self, dataset, region, file):
+    def __init__(self, dataset, region, period):
+        self.dataset = dataset
+        self.region = region
+        self.period = period
+
+    @property
+    def path(self):
         raise NotImplementedError
 
-    def fetch(self, dataset, region):
+    def exists(self):
+        return self.path.exists()
+
+    def fetch(self):
         raise NotImplementedError
 
-    def exists(self, dataset, region):
+    def extract(self, file):
         raise NotImplementedError
 
-    def write(self, ds, path, first):
+    def read(self):
         raise NotImplementedError
 
-    def read(self, dataset, region):
-        raise NotImplementedError
+    @classmethod
+    def has_region(cls, region):
+        return cls.region_types is None or region.type in cls.region_types
 
-    def has_region(self, region):
-        return self.region_types is None or region.type in self.region_types
+    @classmethod
+    def has_period(cls, period):
+        return cls.period_types is None or period.type in cls.period_types
 
 
 class Assessment:
@@ -126,11 +144,17 @@ class Assessment:
     def plot(self, extraction, region):
         raise NotImplementedError
 
-    def has_extraction(self, extraction):
-        return self.extractions is None or extraction.specifier in self.extractions
+    @classmethod
+    def has_extraction(cls, extraction):
+        return cls.extractions is None or extraction.specifier in cls.extractions
 
-    def has_region(self, region):
-        return self.region_types is None or region.type in self.region_types
+    @classmethod
+    def has_region(cls, region):
+        return cls.region_types is None or region.type in cls.region_types
+
+    @classmethod
+    def has_period(cls, period):
+        return cls.period_types is None or period.type in cls.period_types
 
 
 class Subplot:

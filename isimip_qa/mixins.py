@@ -1,12 +1,9 @@
 import itertools
 import json
 import logging
-from collections import defaultdict
 from itertools import product
 
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import xarray as xr
 
 from isimip_utils.fetch import fetch_file
@@ -20,26 +17,23 @@ logger = logging.getLogger(__name__)
 
 class RemoteExtractionMixin:
 
-    def fetch(self, dataset, region):
-        path = self.get_path(dataset, region)
-        file_content = fetch_file(settings.EXTRACTIONS_LOCATIONS, path.relative_to(settings.EXTRACTIONS_PATH))
+    def fetch(self):
+        file_content = fetch_file(settings.EXTRACTIONS_LOCATIONS, self.path.relative_to(settings.EXTRACTIONS_PATH))
         if file_content is not None:
-            logger.info('fetch %s', path)
-            path.parent.mkdir(exist_ok=True, parents=True)
-            path.open('wb').write(file_content)
-            return path
+            logger.info('fetch %s', self.path)
+            self.path.parent.mkdir(exist_ok=True, parents=True)
+            self.path.open('wb').write(file_content)
+            return self.path
 
 
 class CSVExtractionMixin:
 
-    def get_path(self, dataset, region):
-        path = dataset.replace_name(region=region.specifier, extraction=self.specifier)
+    @property
+    def path(self):
+        path = self.dataset.replace_name(region=self.region.specifier, extraction=self.specifier)
         return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.csv')
 
-    def exists(self, dataset, region):
-        return self.get_path(dataset, region).exists()
-
-    def write(self, data, path, first):
+    def write(self, data, append=False):
         if isinstance(data, xr.core.dataset.Dataset):
             # this is a xarray dataset, so we convert it to a dataframe
             ds = data
@@ -55,105 +49,56 @@ class CSVExtractionMixin:
             # this is a pandas dataframe
             df = data
 
-        if first:
-            path.parent.mkdir(exist_ok=True, parents=True)
-            df.to_csv(path)
+        if append:
+            df.to_csv(self.path, mode='a', header=False)
         else:
-            df.to_csv(path, mode='a', header=False)
+            self.path.parent.mkdir(exist_ok=True, parents=True)
+            df.to_csv(self.path)
 
-    def read(self, dataset, region):
-        # pandas cannot handle datetimes before 1677-09-22 so we need to
-        # manually set every timestamp before to None using a custom date_parser
-        def parse_time(time):
-            try:
-                return pd.Timestamp(np.datetime64(time))
-            except pd.errors.OutOfBoundsDatetime:
-                return pd.NaT
+    # def read(self, dataset, region):
+    #     # pandas cannot handle datetimes before 1677-09-22 so we need to
+    #     # manually set every timestamp before to None using a custom date_parser
+    #     def parse_time(time):
+    #         try:
+    #             return pd.Timestamp(np.datetime64(time))
+    #         except pd.errors.OutOfBoundsDatetime:
+    #             return pd.NaT
 
-        # get the csv_path
-        path = self.get_path(dataset, region)
+    #     # get the csv_path
+    #     path = self.get_path(dataset, region)
 
-        # read the dataframe from the csv
-        try:
-            df = pd.read_csv(path)
-        except FileNotFoundError as e:
-            raise ExtractionNotFound from e
+    #     # read the dataframe from the csv
+    #     try:
+    #         df = pd.read_csv(path)
+    #     except FileNotFoundError as e:
+    #         raise ExtractionNotFound from e
 
-        if 'time' in df:
-            # parse the time axis of the dataframe
-            df['time'] = df['time'].apply(parse_time)
+    #     if 'time' in df:
+    #         # parse the time axis of the dataframe
+    #         df['time'] = df['time'].apply(parse_time)
 
-            # remove all values without time
-            df = df[df.time.notnull()]
-            df.set_index('time', inplace=True)
+    #         # remove all values without time
+    #         df = df[df.time.notnull()]
+    #         df.set_index('time', inplace=True)
 
-        return df
+    #     return df
 
 
 class JSONExtractionMixin:
 
-    def get_path(self, dataset, region):
-        path = dataset.replace_name(region=region.specifier)
+    @property
+    def path(self):
+        path = self.dataset.replace_name(region=self.region.specifier)
         path = path.with_name(path.name + '_' + self.specifier)
         return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.json')
 
-    def exists(self, dataset, region):
-        return self.get_path(dataset, region).exists()
+    def write(self, data):
+        self.path.parent.mkdir(exist_ok=True, parents=True)
+        json.dump(data, self.path.open('w'))
 
-    def write(self, data, path):
-        path.parent.mkdir(exist_ok=True, parents=True)
-        json.dump(data, path.open('w'))
-
-    def read(self, dataset, region):
-        path = self.get_path(dataset, region)
-        return json.load(path.open())
-
-
-class NetCdfExtractionMixin:
-
-    def get_path(self, dataset, region):
-        path = dataset.replace_name(region=region.specifier)
-        path = path.with_name(path.name + '_' + self.specifier)
-        return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.nc')
-
-    def exists(self, dataset, region):
-        return self.get_path(dataset, region).exists()
-
-    def write(self, ds, path):
-        path.parent.mkdir(exist_ok=True, parents=True)
-
-        # remove globa attributes
-        ds.attrs = {}
-
-        ds.lat.attrs['_FillValue'] = 1.e+20
-        ds.lon.attrs['_FillValue'] = 1.e+20
-        ds.time.attrs['_FillValue'] = 1.e+20
-
-        ds.to_netcdf(path, unlimited_dims=['time'], format='NETCDF4_CLASSIC')
-
-    def read(self, dataset, region):
-        path = self.get_path(dataset, region)
-        return xr.load_dataset(settings.DATASETS_PATH / path)
-
-
-class ConcatExtractionMixin:
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.ds = defaultdict(dict)
-        self.n = defaultdict(dict)
-
-    def concat(self, dataset, region, ds, n):
-        if dataset not in self.ds:
-            self.ds[dataset] = {}
-            self.n[dataset] = {}
-
-        if region not in self.ds[dataset]:
-            self.ds[dataset][region] = ds
-            self.n[dataset][region] = n
-        else:
-            self.ds[dataset][region] += ds
-            self.n[dataset][region] += n
+    # def read(self, dataset, region):
+    #     path = self.get_path(dataset, region)
+    #     return json.load(path.open())
 
 
 class PlotMixin:
