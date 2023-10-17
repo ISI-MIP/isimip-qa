@@ -32,9 +32,11 @@ class Settings(BaseSettings):
     @cached_property
     def PLACEHOLDERS(self):
         placeholders_dict = defaultdict(list)
-        for placeholders_string in self.args.get('PLACEHOLDERS'):
-            placeholder, values = placeholders_string.split('=')
-            placeholders_dict[placeholder] += values.split(',')
+        placeholders_strings = self.args.get('PLACEHOLDERS')
+        if placeholders_strings:
+            for placeholders_string in placeholders_strings:
+                placeholder, values = placeholders_string.split('=')
+                placeholders_dict[placeholder] += values.split(',')
         return placeholders_dict
 
     @cached_property
@@ -53,7 +55,7 @@ class Settings(BaseSettings):
 
             return datasets
         else:
-            return [self.PATH]
+            return self.PATHS
 
     @cached_property
     def DATASETS_PATH(self):
