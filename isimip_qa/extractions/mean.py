@@ -14,14 +14,19 @@ class MeanExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
     def extract(self, file):
         logger.info(f'extract {self.region.specifier} {self.specifier} from {file.path}')
 
+        ds = file.ds
+
+        if self.period.type == 'slice':
+            ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
+
         if self.region.type == 'mask':
-            ds = file.ds.where(self.region.mask == 1).mean(dim=('lat', 'lon'), skipna=True)
+            ds = ds.where(self.region.mask == 1).mean(dim=('lat', 'lon'), skipna=True)
 
         elif self.region.type == 'point':
-            ds = file.ds.sel(lat=self.region.lat, lon=self.region.lon, method='nearest')
+            ds = ds.sel(lat=self.region.lat, lon=self.region.lon, method='nearest')
 
         else:
-            ds = file.ds.mean(dim=('lat', 'lon'), skipna=True)
+            ds = ds.mean(dim=('lat', 'lon'), skipna=True)
 
         logger.info(f'write {self.path}')
         self.write(ds, append=not file.first)

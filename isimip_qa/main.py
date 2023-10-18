@@ -33,14 +33,16 @@ def get_parser():
                         help='Run only specific assessments (comma seperated)')
     parser.add_argument('-r', '--regions', dest='regions', default='global',
                         help='extract only specific regions (comma seperated)')
+    parser.add_argument('-p', '--periods', dest='periods', default=None,
+                        help='extract only specific periods (comma seperated, format: YYYY_YYYY)')
+
     parser.add_argument('-g', '--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
                         help='Maximum dimensions of the plot grid [default: 2]')
-    parser.add_argument('-p', '--primary', dest='primary', default=None,
-                        help='Treat these placeholders as primary and plot them in color [default: all]')
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                         help='Always run extractions')
     parser.add_argument('-l', '--load', dest='load', action='store_true', default=False,
                         help='Load NetCDF datasets completely in memory')
+
     parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,
                         help='Run only assessments')
     parser.add_argument('--extractions-locations', dest='extractions_locations',
@@ -50,6 +52,8 @@ def get_parser():
                         help='Run only assessments')
     parser.add_argument('--assessments-format', dest='assessments_format', default='svg',
                         help='File format for assessment plots [default: png].')
+    parser.add_argument('--primary', dest='primary', default=None,
+                        help='Treat these placeholders as primary and plot them in color [default: all]')
 
     parser.add_argument('--ymin', type=float, dest='ymin', default=None,
                         help='Fixed minimal y value for plots.')
@@ -104,10 +108,11 @@ def main():
         if region['specifier'] in settings.REGIONS
     ]
 
-    # create list of times
+    # create list of periods
     periods = [
-        Period(start_year=1901, end_year=2019)
-    ]
+        Period(type='slice', start_date=start_date, end_date=end_date)
+        for start_date, end_date in settings.PERIODS
+    ] if settings.PERIODS else [Period(type='full')]
 
     # run the extractions
     if not settings.ASSESSMENTS_ONLY:

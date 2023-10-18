@@ -14,10 +14,15 @@ class MeanMapExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
     def extract(self, file):
         logger.info(f'extract {self.region.specifier} {self.specifier} from {file.path}')
 
+        ds = file.ds
+
+        if self.period.type == 'slice':
+            ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
+
         if self.region.type == 'mask':
-            ds = file.ds.where(self.region.mask == 1).sum(dim=('time',), skipna=True, min_count=1)
-        else:
-            ds = file.ds.sum(dim=('time',), skipna=True, min_count=1)
+            ds = ds.where(self.region.mask == 1)
+
+        ds = ds.sum(dim=('time',), skipna=True, min_count=1)
 
         if file.first:
             self.ds = ds

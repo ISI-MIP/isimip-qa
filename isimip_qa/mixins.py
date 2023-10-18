@@ -32,7 +32,11 @@ class CSVExtractionMixin:
 
     @property
     def path(self):
-        path = self.dataset.replace_name(region=self.region.specifier, extraction=self.specifier)
+        replacements = {'region': self.region.specifier, 'extraction': self.specifier}
+        if self.period.type == 'slice':
+            replacements.update({'start_date': self.period.start_date, 'end_date': self.period.end_date})
+
+        path = self.dataset.replace_name(**replacements)
         return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.csv')
 
     def write(self, data, append=False):
@@ -170,7 +174,10 @@ class GridPlotMixin(PlotMixin):
         name = name.replace('_global_', '_' + self.region.specifier + '_')
 
         # add the extration and the assessment specifiers
-        name = name + '_' + self.extraction_class.specifier + '_' + self.specifier
+        name = f'{name}_{self.extraction_class.specifier}_{self.specifier}'
+
+        if self.period.type == 'slice':
+            name = f'{name}_{self.period.start_date}_{self.period.end_date}'
 
         return settings.ASSESSMENTS_PATH / name
 

@@ -82,12 +82,6 @@ class Region:
                 settings.MASKS[kwargs['mask_path']] = Mask(kwargs['mask_path'])
             self.mask = settings.MASKS[kwargs['mask_path']][kwargs['mask_variable']]
 
-class Period:
-
-    def __init__(self, **kwargs):
-        self.start_year = kwargs['start_year']
-        self.end_year = kwargs['end_year']
-
 
 class Mask:
 
@@ -96,6 +90,16 @@ class Mask:
 
     def __getitem__(self, item):
         return self.ds[item]
+
+
+class Period:
+
+    def __init__(self, **kwargs):
+        self.type = kwargs['type']
+
+        if self.type == 'slice':
+            self.start_date = kwargs['start_date']
+            self.end_date = kwargs['end_date']
 
 
 class Extraction:

@@ -14,11 +14,15 @@ class CountExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
     def extract(self, file):
         logger.info(f'extract {self.region.specifier} {self.specifier} from {file.path}')
 
-        if self.region.type == 'mask':
-            ds = file.ds.where(self.region.mask == 1).count(dim=('lat', 'lon'))
+        ds = file.ds
 
-        else:
-            ds = file.ds.count(dim=('lat', 'lon'))
+        if self.period.type == 'slice':
+            ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
+
+        if self.region.type == 'mask':
+            ds = ds.where(self.region.mask == 1)
+
+        ds = ds.count(dim=('lat', 'lon'))
 
         logger.info(f'write {self.path}')
         self.write(ds, append=not file.first)

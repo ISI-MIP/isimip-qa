@@ -74,6 +74,12 @@ class Settings(BaseSettings):
         return self.args.get('REGIONS').split(',')
 
     @cached_property
+    def PERIODS(self):
+        periods_strings = self.args.get('PERIODS')
+        if periods_strings:
+            return [period.split('_') for period in periods_strings.split(',')]
+
+    @cached_property
     def EXTRACTIONS(self):
         return self.args.get('EXTRACTIONS').split(',')
 
