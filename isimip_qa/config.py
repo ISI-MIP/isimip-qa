@@ -4,6 +4,7 @@ from pathlib import Path
 
 from isimip_utils.config import Settings as BaseSettings
 from isimip_utils.decorators import cached_property
+from isimip_utils.fetch import fetch_json
 
 
 class Settings(BaseSettings):
@@ -74,6 +75,18 @@ class Settings(BaseSettings):
         return self.args.get('REGIONS').split(',')
 
     @cached_property
+    def REGIONS_LIST(self):
+        regions_list = [{'type': 'global', 'specifier': 'global'}]
+
+        for file in Path(__file__).parent.joinpath('regions').iterdir():
+            regions_list += fetch_json([str(file)])
+
+        if self.REGIONS_LOCATIONS:
+            regions_list += fetch_json(self.REGIONS_LOCATIONS)
+
+        return regions_list
+
+    @cached_property
     def PERIODS(self):
         periods_strings = self.args.get('PERIODS')
         if periods_strings:
@@ -92,8 +105,12 @@ class Settings(BaseSettings):
         return self.args.get('PRIMARY').split(',') if self.args.get('PRIMARY') else []
 
     @cached_property
+    def REGIONS_LOCATIONS(self):
+        print(111, self.args.get('REGIONS_LOCATIONS'))
+        return self.args.get('REGIONS_LOCATIONS').split()
+
+    @cached_property
     def EXTRACTIONS_LOCATIONS(self):
         return self.args.get('EXTRACTIONS_LOCATIONS').split()
-
 
 settings = Settings()

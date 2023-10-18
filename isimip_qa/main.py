@@ -7,7 +7,6 @@ from .config import settings
 from .extractions import extraction_classes
 from .models import Dataset, Period, Region
 from .parser import ArgumentAction
-from .regions import regions_list
 
 logger = logging.getLogger(__name__)
 
@@ -21,20 +20,20 @@ def get_parser():
                         help='Values for the placeholders in the from placeholder=value1,value2,...')
 
     parser.add_argument('--datasets-path', dest='datasets_path',
-                        help='base path for the input datasets')
+                        help='Base path for the input datasets')
     parser.add_argument('--extractions-path', dest='extractions_path',
-                        help='base path for the output extractions')
-    parser.add_argument('--assessments-path', dest='assessments_path',
-                        help='base path for the output assessments')
+                        help='Base path for the output extractions')
+    parser.add_argument('--assssments-path', dest='assessments_path',
+                        help='Base path for the output assessments')
 
     parser.add_argument('-e', '--extractions', dest='extractions', default=None,
                         help='Run only specific extractions (comma seperated)')
     parser.add_argument('-a', '--assessments', dest='assessments', default=None,
                         help='Run only specific assessments (comma seperated)')
     parser.add_argument('-r', '--regions', dest='regions', default='global',
-                        help='extract only specific regions (comma seperated)')
+                        help='Extract only specific regions (comma seperated)')
     parser.add_argument('-p', '--periods', dest='periods', default=None,
-                        help='extract only specific periods (comma seperated, format: YYYY_YYYY)')
+                        help='Extract only specific periods (comma seperated, format: YYYY_YYYY)')
 
     parser.add_argument('-g', '--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
                         help='Maximum dimensions of the plot grid [default: 2]')
@@ -75,6 +74,8 @@ def get_parser():
     parser.add_argument('--protocol-location', dest='protocol_locations',
                         default='https://protocol.isimip.org https://protocol2.isimip.org',
                         help='URL or file path to the protocol')
+    parser.add_argument('--regions-location', dest='regions_locations', default='',
+                        help='Use the provided files to create the regions.')
     parser.add_argument('--log-level', dest='log_level', default='WARN',
                         help='Log level (ERROR, WARN, INFO, or DEBUG)')
     parser.add_argument('--log-file', dest='log_file',
@@ -104,7 +105,7 @@ def main():
 
     # create list of regions
     regions = [
-        Region(**region) for region in regions_list
+        Region(**region) for region in settings.REGIONS_LIST
         if region['specifier'] in settings.REGIONS
     ]
 
