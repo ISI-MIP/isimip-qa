@@ -3,12 +3,12 @@ import inspect
 import os
 from pathlib import Path
 
-from ..models import Assessment
+from ..models import Plot
 
 path = Path(__file__).parent
 
-# gather assessment classes from the python files in this directory
-assessment_classes = set()
+# gather plot classes from the python files in this directory
+plot_classes = set()
 for root, dirs, files in os.walk(path):
     for file_name in sorted(files):
         file_path = path / root / file_name
@@ -17,6 +17,6 @@ for root, dirs, files in os.walk(path):
             module_name = '.'.join(parts)
             module = importlib.import_module(module_name)
             for module_class_name, module_class in inspect.getmembers(module, inspect.isclass):
-                if module_class != Assessment and issubclass(module_class, Assessment):
-                    assessment_classes.add(module_class)
+                if module_class != Plot and issubclass(module_class, Plot):
+                    plot_classes.add(module_class)
                     globals()[module_class_name] = module_class

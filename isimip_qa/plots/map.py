@@ -5,13 +5,13 @@ import pandas as pd
 
 from ..config import settings
 from ..extractions import AttrsExtraction
-from ..mixins import GridPlotMixin
-from ..models import Assessment
+from ..mixins import FigurePlotMixin, GridPlotMixin
+from ..models import Plot
 
 logger = logging.getLogger(__name__)
 
 
-class MapAssessment(GridPlotMixin, Assessment):
+class MapPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     specifier = 'map'
     extractions = ['meanmap', 'countmap']
@@ -23,7 +23,7 @@ class MapAssessment(GridPlotMixin, Assessment):
     def get_attrs(self, dataset):
         return AttrsExtraction(dataset, self.region, self.period).read()
 
-    def plot(self):
+    def create(self):
         logger.info(f'plot {self.extraction_class.specifier} {self.specifier} {self.region.specifier}')
 
         subplots = self.get_subplots()

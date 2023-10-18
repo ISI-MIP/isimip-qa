@@ -10,7 +10,7 @@ from ..models import Subplot
 logger = logging.getLogger(__name__)
 
 
-class PlotMixin:
+class FigurePlotMixin:
 
     def __init__(self, *args, **kwargs):
         self.save = kwargs.pop('save', False)
@@ -18,7 +18,7 @@ class PlotMixin:
 
     def save_figure(self, fig, path):
         if self.save:
-            path = path.with_suffix(f'.{settings.ASSESSMENTS_FORMAT}')
+            path = path.with_suffix(f'.{settings.PLOTS_FORMAT}')
             path.parent.mkdir(exist_ok=True, parents=True)
 
             logger.info(f'save {path}')
@@ -28,7 +28,7 @@ class PlotMixin:
                 logger.error(f'could not save {path} ({e})')
 
 
-class GridPlotMixin(PlotMixin):
+class GridPlotMixin:
 
     colors = [
         '#1f77b4', '#ff7f0e', '#2ca02c',
@@ -83,13 +83,13 @@ class GridPlotMixin(PlotMixin):
         # but after a lot (!) of experiments, this is the best solution ...
         name = name.replace('_global_', '_' + self.region.specifier + '_')
 
-        # add the extration and the assessment specifiers
+        # add the extration and the plot specifiers
         name = f'{name}_{self.extraction_class.specifier}_{self.specifier}'
 
         if self.period.type == 'slice':
             name = f'{name}_{self.period.start_date}_{self.period.end_date}'
 
-        return settings.ASSESSMENTS_PATH / name
+        return settings.PLOTS_PATH / name
 
     def get_grid(self, figs=False):
         grid = [1, 1, 1] if figs else [1, 1]

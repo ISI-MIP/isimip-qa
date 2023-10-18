@@ -2,11 +2,11 @@ import logging
 
 from isimip_utils.parser import ArgumentParser
 
-from .assessments import assessment_classes
 from .config import settings
 from .extractions import extraction_classes
 from .models import Dataset, Period, Region
 from .parser import ArgumentAction
+from .plots import plot_classes
 
 logger = logging.getLogger(__name__)
 
@@ -22,14 +22,14 @@ def get_parser():
     parser.add_argument('--datasets-path', dest='datasets_path',
                         help='Base path for the input datasets')
     parser.add_argument('--extractions-path', dest='extractions_path',
-                        help='Base path for the output extractions')
-    parser.add_argument('--assssments-path', dest='assessments_path',
-                        help='Base path for the output assessments')
+                        help='Base path for the created extractions')
+    parser.add_argument('--plots-path', dest='plots_path',
+                        help='Base path for the created plots')
 
     parser.add_argument('-e', '--extractions', dest='extractions', default=None,
                         help='Run only specific extractions (comma seperated)')
-    parser.add_argument('-a', '--assessments', dest='assessments', default=None,
-                        help='Run only specific assessments (comma seperated)')
+    parser.add_argument('-a', '--plots', dest='plots', default=None,
+                        help='Create only specific plots (comma seperated)')
     parser.add_argument('-r', '--regions', dest='regions', default='global',
                         help='Extract only specific regions (comma seperated)')
     parser.add_argument('-p', '--periods', dest='periods', default=None,
@@ -43,14 +43,14 @@ def get_parser():
                         help='Load NetCDF datasets completely in memory')
 
     parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,
-                        help='Run only assessments')
+                        help='Only create extractions')
     parser.add_argument('--extractions-locations', dest='extractions_locations',
                         default='https://files.isimip.org/qa/extractions/',
                         help='URL or file path to the locations of extractions to fetch')
-    parser.add_argument('--assessments-only', dest='assessments_only', action='store_true', default=False,
-                        help='Run only assessments')
-    parser.add_argument('--assessments-format', dest='assessments_format', default='svg',
-                        help='File format for assessment plots [default: png].')
+    parser.add_argument('--plots-only', dest='plots_only', action='store_true', default=False,
+                        help='Only create plots')
+    parser.add_argument('--plots-format', dest='plots_format', default='svg',
+                        help='File format for plots [default: svg].')
     parser.add_argument('--primary', dest='primary', default=None,
                         help='Treat these placeholders as primary and plot them in color [default: all]')
 
@@ -106,7 +106,7 @@ def main():
     periods = [Period(**period) for period in settings.PERIODS]
 
     # run the extractions
-    if not settings.ASSESSMENTS_ONLY:
+    if not settings.PLOTS_ONLY:
         for dataset in datasets:
             extractions = []
             for region in regions:
@@ -129,9 +129,9 @@ def main():
                         extraction.extract(file)
                     file.close()
 
-    # run the assessments
+    # create the plots
     if not settings.EXTRACTIONS_ONLY:
-        for assessment_class in assessment_classes:
+        for plot_class in plot_classes:
             for region in regions:
                 for period in periods:
                     for extraction_class in extraction_classes:
@@ -141,11 +141,11 @@ def main():
                             and extraction_class.has_period(period)
                         ):
                             if (
-                                (settings.ASSESSMENTS is None or assessment_class.specifier in settings.ASSESSMENTS)
-                                and assessment_class.has_extraction(extraction_class)
+                                (settings.PLOTS is None or plot_class.specifier in settings.PLOTS)
+                                and plot_class.has_extraction(extraction_class)
                                 and extraction_class.has_region(region)
                                 and extraction_class.has_period(period)
                             ):
-                                assessment = assessment_class(extraction_class, datasets, region, period, save=True,
-                                                              dimensions=settings.PLACEHOLDERS, grid=settings.GRID)
-                                assessment.plot()
+                                plot = plot_class(extraction_class, datasets, region, period, save=True,
+                                                  dimensions=settings.PLACEHOLDERS, grid=settings.GRID)
+                                plot.create()

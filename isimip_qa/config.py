@@ -67,8 +67,8 @@ class Settings(BaseSettings):
         return Path(self.args['EXTRACTIONS_PATH']).expanduser()
 
     @cached_property
-    def ASSESSMENTS_PATH(self):
-        return Path(self.args['ASSESSMENTS_PATH']).expanduser()
+    def PLOTS_PATH(self):
+        return Path(self.args['PLOTS_PATH']).expanduser()
 
     @cached_property
     def REGIONS(self):
@@ -111,8 +111,8 @@ class Settings(BaseSettings):
         return self.args.get('EXTRACTIONS').split(',')
 
     @cached_property
-    def ASSESSMENTS(self):
-        return self.args.get('ASSESSMENTS').split(',')
+    def PLOTS(self):
+        return self.args.get('PLOTS').split(',')
 
     @cached_property
     def PRIMARY(self):

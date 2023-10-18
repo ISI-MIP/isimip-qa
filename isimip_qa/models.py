@@ -141,7 +141,7 @@ class Extraction:
         return cls.period_types is None or period.type in cls.period_types
 
 
-class Assessment:
+class Plot:
 
     extraction_classes = None
     region_types = None
@@ -153,7 +153,7 @@ class Assessment:
         self.region = region
         self.period = period
 
-    def plot(self):
+    def create(self):
         raise NotImplementedError
 
     @classmethod

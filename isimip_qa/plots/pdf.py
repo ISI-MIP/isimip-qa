@@ -3,13 +3,13 @@ import logging
 import matplotlib.pyplot as plt
 
 from ..extractions import AttrsExtraction
-from ..mixins import GridPlotMixin
-from ..models import Assessment
+from ..mixins import FigurePlotMixin, GridPlotMixin
+from ..models import Plot
 
 logger = logging.getLogger(__name__)
 
 
-class PDFAssessment(GridPlotMixin, Assessment):
+class PDFPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     specifier = 'pdf'
     extractions = ['histogram']
@@ -22,7 +22,7 @@ class PDFAssessment(GridPlotMixin, Assessment):
     def get_attrs(self, dataset):
         return AttrsExtraction(dataset, self.region, self.period).read()
 
-    def plot(self):
+    def create(self):
         logger.info(f'plot {self.extraction_class.specifier} {self.specifier} {self.region.specifier}')
 
         subplots = self.get_subplots()
