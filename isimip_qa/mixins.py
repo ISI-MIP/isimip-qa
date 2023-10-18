@@ -115,7 +115,10 @@ class PlotMixin:
             path.parent.mkdir(exist_ok=True, parents=True)
 
             logger.info(f'save {path}')
-            fig.savefig(path, bbox_inches='tight')
+            try:
+                fig.savefig(path, bbox_inches='tight')
+            except ValueError as e:
+                logger.error(f'could not save {path} ({e})')
 
 
 class GridPlotMixin(PlotMixin):

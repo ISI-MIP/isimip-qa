@@ -72,7 +72,15 @@ class Settings(BaseSettings):
 
     @cached_property
     def REGIONS(self):
-        return self.args.get('REGIONS').split(',')
+        regions_strings = self.args.get('REGIONS')
+        if regions_strings:
+            regions = []
+            for regions_string in regions_strings.split(','):
+                regions += list(filter(lambda r: r.get('specifier', '').startswith(regions_string), self.REGIONS_LIST))
+            return regions
+        else:
+            # return only the global region
+            return [{'type': 'global', 'specifier': 'global'}]
 
     @cached_property
     def REGIONS_LIST(self):
@@ -90,7 +98,13 @@ class Settings(BaseSettings):
     def PERIODS(self):
         periods_strings = self.args.get('PERIODS')
         if periods_strings:
-            return [period.split('_') for period in periods_strings.split(',')]
+            periods = []
+            for period_string in periods_strings.split(','):
+                start_date, end_date = period_string.split('-')
+                periods.append({'type': 'slice', 'start_date': start_date, 'end_date': end_date})
+            return periods
+        else:
+            return [{'type': 'auto'}]
 
     @cached_property
     def EXTRACTIONS(self):
@@ -106,7 +120,6 @@ class Settings(BaseSettings):
 
     @cached_property
     def REGIONS_LOCATIONS(self):
-        print(111, self.args.get('REGIONS_LOCATIONS'))
         return self.args.get('REGIONS_LOCATIONS').split()
 
     @cached_property

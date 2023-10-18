@@ -99,21 +99,11 @@ def main():
     settings.setup(args)
 
     # create list of datasets
-    datasets = []
-    for path in settings.DATASETS:
-        datasets.append(Dataset(path))
+    datasets = [Dataset(path) for path in settings.DATASETS]
 
-    # create list of regions
-    regions = [
-        Region(**region) for region in settings.REGIONS_LIST
-        if region['specifier'] in settings.REGIONS
-    ]
-
-    # create list of periods
-    periods = [
-        Period(type='slice', start_date=start_date, end_date=end_date)
-        for start_date, end_date in settings.PERIODS
-    ] if settings.PERIODS else [Period(type='full')]
+    # create list of regions and periods
+    regions = [Region(**region) for region in settings.REGIONS]
+    periods = [Period(**period) for period in settings.PERIODS]
 
     # run the extractions
     if not settings.ASSESSMENTS_ONLY:
@@ -156,7 +146,6 @@ def main():
                                 and extraction_class.has_region(region)
                                 and extraction_class.has_period(period)
                             ):
-                                assessment = assessment_class(extraction_class, datasets, region, period,
-                                                              dimensions=settings.PLACEHOLDERS, grid=settings.GRID,
-                                                              save=True)
+                                assessment = assessment_class(extraction_class, datasets, region, period, save=True,
+                                                              dimensions=settings.PLACEHOLDERS, grid=settings.GRID)
                                 assessment.plot()
