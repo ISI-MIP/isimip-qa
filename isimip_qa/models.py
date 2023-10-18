@@ -85,8 +85,12 @@ class Region:
 
 class Mask:
 
-    def __init__(self, mask_path):
-        self.ds = xr.load_dataset(settings.DATASETS_PATH / mask_path)
+    def __init__(self, path):
+        path = Path(path).expanduser()
+        if not path.is_absolute():
+            path = settings.DATASETS_PATH / path
+
+        self.ds = xr.load_dataset(path)
 
     def __getitem__(self, item):
         return self.ds[item]
