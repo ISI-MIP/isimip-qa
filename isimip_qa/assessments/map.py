@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from ..config import settings
-from ..extractions.attrs import AttrsExtraction
+from ..extractions import AttrsExtraction
 from ..mixins import GridPlotMixin
 from ..models import Assessment
 

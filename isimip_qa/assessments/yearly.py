@@ -2,7 +2,7 @@ import logging
 
 import matplotlib.pyplot as plt
 
-from ..extractions.attrs import AttrsExtraction
+from ..extractions import AttrsExtraction
 from ..mixins import GridPlotMixin
 from ..models import Assessment
 
