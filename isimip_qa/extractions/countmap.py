@@ -19,15 +19,17 @@ class CountMapExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
         if self.period.type == 'slice':
             ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
 
-        if self.region.type == 'mask':
-            ds = ds.where(self.region.mask == 1)
+        if ds.time.size > 0:
 
-        ds = ds.count(dim=('time',))
+            if self.region.type == 'mask':
+                ds = ds.where(self.region.mask == 1)
 
-        if file.first:
-            self.ds = ds
-        else:
-            self.ds += ds
+            ds = ds.count(dim=('time',))
+
+            try:
+                self.ds += ds
+            except AttributeError:
+                self.ds = ds
 
         if file.last:
             # only consider values > 0

@@ -1,7 +1,5 @@
 import logging
 
-import matplotlib.pyplot as plt
-
 from ..extractions import AttrsExtraction
 from ..mixins import FigurePlotMixin, GridPlotMixin
 from ..models import Plot
@@ -50,6 +48,8 @@ class DayOfYearPlot(FigurePlotMixin, GridPlotMixin, Plot):
             ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
         if subplots:
-            self.save_figure(fig, self.get_path())
-
-        plt.close()
+            if self.save:
+                path = self.get_path()
+                self.write(fig, path)
+            else:
+                self.show()

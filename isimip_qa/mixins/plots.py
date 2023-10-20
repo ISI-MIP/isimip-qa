@@ -16,7 +16,7 @@ class FigurePlotMixin:
         self.save = kwargs.pop('save', False)
         super().__init__(*args, **kwargs)
 
-    def save_figure(self, fig, path):
+    def write(self, fig, path):
         if self.save:
             path = path.with_suffix(f'.{settings.PLOTS_FORMAT}')
             path.parent.mkdir(exist_ok=True, parents=True)
@@ -26,6 +26,14 @@ class FigurePlotMixin:
                 fig.savefig(path, bbox_inches='tight')
             except ValueError as e:
                 logger.error(f'could not save {path} ({e})')
+        else:
+            plt.show()
+
+        plt.close()
+
+    def show(self):
+        plt.show()
+        plt.close()
 
 
 class GridPlotMixin:
@@ -55,6 +63,9 @@ class GridPlotMixin:
         return fig, axs
 
     def get_path(self, ifig=None):
+        if not settings.PATHS:
+            return None
+
         name = settings.PATHS[0].with_suffix('').name
 
         if self.dimensions:

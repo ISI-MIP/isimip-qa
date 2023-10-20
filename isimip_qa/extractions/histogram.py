@@ -22,25 +22,27 @@ class HistogramExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction)
         if self.period.type == 'slice':
             ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
 
-        if self.region.type == 'mask':
-            ds = ds.where(self.region.mask == 1)
-        elif self.region.type == 'point':
-            ds = ds.sel(lat=self.region.lat, lon=self.region.lon, method='nearest')
+        if ds.time.size > 0:
 
-        var = next(iter(file.ds.data_vars.values()))
-        array = ds[var.name].as_numpy()
-        array_range = (array.min().values, array.max().values)
+            if self.region.type == 'mask':
+                ds = ds.where(self.region.mask == 1)
+            elif self.region.type == 'point':
+                ds = ds.sel(lat=self.region.lat, lon=self.region.lon, method='nearest')
 
-        histogram = np.histogram(array, bins=100, range=array_range)
+            var = next(iter(file.ds.data_vars.values()))
+            array = ds[var.name].as_numpy()
+            array_range = (array.min().values, array.max().values)
 
-        df = pd.DataFrame(data={
-            'count': histogram[0]
-        }, dtype=np.float64, index=pd.Index(histogram[1][1:], name='bin'))
+            histogram = np.histogram(array, bins=100, range=array_range)
 
-        if file.first:
-            self.df = df
-        else:
-            self.df += df
+            df = pd.DataFrame(data={
+                'count': histogram[0]
+            }, dtype=np.float64, index=pd.Index(histogram[1][1:], name='bin'))
+
+            try:
+                self.df['count'] += df['count']
+            except AttributeError:
+                self.df = df
 
         if file.last:
             logger.info(f'write {self.path}')

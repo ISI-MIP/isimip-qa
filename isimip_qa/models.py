@@ -102,8 +102,8 @@ class Period:
         self.type = kwargs['type']
 
         if self.type == 'slice':
-            self.start_date = kwargs['start_date']
-            self.end_date = kwargs['end_date']
+            self.start_date = str(kwargs['start_date'])
+            self.end_date = str(kwargs['end_date'])
 
 
 class Extraction:

@@ -1,3 +1,4 @@
+import re
 from collections import defaultdict
 from itertools import product
 from pathlib import Path
@@ -15,20 +16,11 @@ class Settings(BaseSettings):
         # create a dict to store masks
         self.MASKS = {}
 
-        # check if all placeholders are there
-        if self.PATHS and self.PLACEHOLDERS:
-            for path in self.PATHS:
-                permutations = next(product(*self.PLACEHOLDERS.values()))
-                placeholders = dict(zip(self.PLACEHOLDERS.keys(), permutations))
-
-                try:
-                    str(path).format(**placeholders)
-                except KeyError as e:
-                    raise RuntimeError('Some of the placeholders are missing.') from e
-
     @cached_property
     def PATHS(self):
-        return [Path(path).expanduser() for path in self.args['PATHS']]
+        paths = self.args.get('PATHS')
+        if paths:
+            return [Path(path).expanduser() for path in paths]
 
     @cached_property
     def PLACEHOLDERS(self):
@@ -42,6 +34,9 @@ class Settings(BaseSettings):
 
     @cached_property
     def DATASETS(self):
+        if self.PATHS is None:
+            RuntimeError('You need to provide at least one path.')
+
         if self.PLACEHOLDERS:
             datasets = []
             placeholder_permutations = list(product(*self.PLACEHOLDERS.values()))
@@ -49,13 +44,22 @@ class Settings(BaseSettings):
             for input_path in self.PATHS:
                 for permutations in placeholder_permutations:
                     placeholders = dict(zip(self.PLACEHOLDERS.keys(), permutations))
-                    path_str = str(input_path).format(**placeholders)
+
+                    try:
+                        path_str = str(input_path).format(**placeholders)
+                    except KeyError as e:
+                        raise RuntimeError('Some of the placeholders are missing.') from e
+
                     path = Path(path_str)
                     path = path.parent / path.name.lower()  # ensure that the name of the path is lower case
                     datasets.append(path)
 
             return datasets
         else:
+            for input_path in self.PATHS:
+                if re.search(r'\{.*\}', str(input_path)):
+                    raise RuntimeError('Some of the placeholders are missing.')
+
             return self.PATHS
 
     @cached_property

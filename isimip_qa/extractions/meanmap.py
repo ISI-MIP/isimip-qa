@@ -19,17 +19,19 @@ class MeanMapExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
         if self.period.type == 'slice':
             ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
 
-        if self.region.type == 'mask':
-            ds = ds.where(self.region.mask == 1)
+        if ds.time.size > 0:
 
-        ds = ds.sum(dim=('time',), skipna=True, min_count=1)
+            if self.region.type == 'mask':
+                ds = ds.where(self.region.mask == 1)
 
-        if file.first:
-            self.ds = ds
-            self.count = len(file.ds.time)
-        else:
-            self.ds += ds
-            self.count += len(file.ds.time)
+            ds = ds.sum(dim=('time',), skipna=True, min_count=1)
+
+            try:
+                self.ds += ds
+                self.count += len(file.ds.time)
+            except AttributeError:
+                self.ds = ds
+                self.count = len(file.ds.time)
 
         if file.last:
             # devide sum by count to get mean

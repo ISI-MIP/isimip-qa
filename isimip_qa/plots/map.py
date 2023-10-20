@@ -75,7 +75,9 @@ class MapPlot(FigurePlotMixin, GridPlotMixin, Plot):
                     cbar.set_ticks([vmin, vmax])
                     cbars.append(ax)
 
-            if fig_subplots:
-                self.save_figure(fig, self.get_path(ifig))
-
-            plt.close()
+            if subplots:
+                if self.save:
+                    path = self.get_path(ifig)
+                    self.write(fig, path)
+                else:
+                    self.show()
