@@ -91,10 +91,14 @@ class Settings(BaseSettings):
         regions_list = [{'type': 'global', 'specifier': 'global'}]
 
         for file in Path(__file__).parent.joinpath('regions').iterdir():
-            regions_list += fetch_json([str(file)])
+            default_regions = fetch_json([str(file)])
+            if default_regions is not None:
+                regions_list += default_regions
 
         if self.REGIONS_LOCATIONS:
-            regions_list += fetch_json(self.REGIONS_LOCATIONS)
+            input_regions = fetch_json(self.REGIONS_LOCATIONS)
+            if input_regions is not None:
+                regions_list += input_regions
 
         return regions_list
 
