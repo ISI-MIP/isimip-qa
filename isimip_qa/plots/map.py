@@ -32,10 +32,22 @@ class MapPlot(FigurePlotMixin, GridPlotMixin, Plot):
         lonmin, lonmax, latmin, latmax, ratio = -180, 180, -90, 90, 3.0
         if self.region.specifier != 'global':
             for sp in subplots:
-                lonmin = max(lonmin, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lon'].min())
-                lonmax = min(lonmax, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lon'].max())
-                latmin = max(latmin, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lat'].min())
-                latmax = min(latmax, sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lat'].max())
+                sp_lon = sp.df['lon'].unique()
+                sp_londelta = 0.5 * abs(sp_lon[1] - sp_lon[0])
+                sp_lonmin = sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lon'].min()
+                sp_lonmax = sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lon'].max()
+
+                lonmin = max(lonmin, sp_lonmin - sp_londelta)
+                lonmax = min(lonmax, sp_lonmax + sp_londelta)
+
+                sp_lat = sp.df['lat'].unique()
+                sp_latdelta = 0.5 * abs(sp_lat[1] - sp_lat[0])
+                sp_latmin = sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lat'].min()
+                sp_latmax = sp.df.where(pd.notna(sp.df[sp.df.columns[-1]]))['lat'].max()
+
+                latmin = max(latmin, sp_latmin - sp_latdelta)
+                latmax = min(latmax, sp_latmax + sp_latdelta)
+
             ratio = max((lonmax - lonmin) / (latmax - latmin), 1.0)
 
         nfigs, nrows, ncols = self.get_grid(figs=True)
