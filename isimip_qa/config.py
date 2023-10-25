@@ -64,15 +64,15 @@ class Settings(BaseSettings):
 
     @cached_property
     def DATASETS_PATH(self):
-        return Path(self.args['DATASETS_PATH']).expanduser()
+        return Path(self.args['DATASETS_PATH']).expanduser() if self.args['DATASETS_PATH'] else Path.cwd()
 
     @cached_property
     def EXTRACTIONS_PATH(self):
-        return Path(self.args['EXTRACTIONS_PATH']).expanduser()
+        return Path(self.args['EXTRACTIONS_PATH']).expanduser() if self.args['EXTRACTIONS_PATH'] else Path.cwd()
 
     @cached_property
     def PLOTS_PATH(self):
-        return Path(self.args['PLOTS_PATH']).expanduser()
+        return Path(self.args['PLOTS_PATH']).expanduser() if self.args['PLOTS_PATH'] else Path.cwd()
 
     @cached_property
     def REGIONS(self):
