@@ -26,9 +26,9 @@ def get_parser():
     parser.add_argument('--plots-path', dest='plots_path',
                         help='Base path for the created plots')
 
-    parser.add_argument('-e', '--extractions', dest='extractions', default=None,
+    parser.add_argument('--extractions', dest='extractions', default=None,
                         help='Run only specific extractions (comma seperated)')
-    parser.add_argument('-a', '--plots', dest='plots', default=None,
+    parser.add_argument('--plots', dest='plots', default=None,
                         help='Create only specific plots (comma seperated)')
     parser.add_argument('-r', '--regions', dest='regions', default='global',
                         help='Extract only specific regions (comma seperated)')
