@@ -31,16 +31,30 @@ class HistogramExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction)
 
             var = next(iter(file.ds.data_vars.values()))
             array = ds[var.name].as_numpy()
-            array_range = (array.min().values, array.max().values)
+            array_min = array.min().values
+            array_max = array.max().values
 
-            histogram = np.histogram(array, bins=100, range=array_range)
+            try:
+                # if the range of the file extends the range of the stored histogram,
+                # the range needs to be extended using the same step size
+                step = self.bins[1] - self.bins[0]
+                if array_min < self.bins[0]:
+                    extension = np.arange(self.bins[0] - step, array_min, step, dtype=np.float64)
+                    self.bins = np.concatenate((extension, self.bins))
+                if array_max > self.bins[-1]:
+                    extension = np.arange(self.bins[-1] + step, array_max, step, dtype=np.float64)
+                    self.bins = np.concatenate((self.bins, extension))
+            except AttributeError:
+                self.bins = np.linspace(array_min, array_max, num=101, endpoint=True, dtype=np.float64)
+
+            histogram = np.histogram(array, bins=self.bins)
 
             df = pd.DataFrame(data={
                 'count': histogram[0]
-            }, dtype=np.float64, index=pd.Index(histogram[1][1:], name='bin'))
+            }, index=pd.Index(histogram[1][:-1], name='bin'), dtype=np.int64)
 
             try:
-                self.df['count'] += df['count']
+                self.df = self.df.reindex(df.index, fill_value=0) + df
             except AttributeError:
                 self.df = df
 
