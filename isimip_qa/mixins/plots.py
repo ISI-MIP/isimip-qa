@@ -115,7 +115,7 @@ class GridPlotMixin:
                 if figs:
                     if j == self.grid:
                         grid[-1] = len(self.values[j])
-                    else:
+                    elif j > self.grid:
                         grid[-1] *= len(self.values[j])
 
         return reversed(grid)
