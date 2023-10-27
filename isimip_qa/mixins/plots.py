@@ -21,7 +21,7 @@ class FigurePlotMixin:
             path = path.with_suffix(f'.{settings.PLOTS_FORMAT}')
             path.parent.mkdir(exist_ok=True, parents=True)
 
-            logger.info(f'save {path}')
+            logger.info(f'write {path}')
             try:
                 fig.savefig(path, bbox_inches='tight')
             except ValueError as e:
