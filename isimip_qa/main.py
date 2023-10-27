@@ -2,6 +2,7 @@ import logging
 
 from isimip_utils.parser import ArgumentParser
 
+from . import __version__
 from .config import settings
 from .extractions import extraction_classes
 from .models import Dataset, Period, Region
@@ -80,6 +81,7 @@ def get_parser():
                         help='Log level (ERROR, WARN, INFO, or DEBUG)')
     parser.add_argument('--log-file', dest='log_file',
                         help='Path to the log file')
+    parser.add_argument('--version', action='version', version=__version__)
 
     return parser
 
