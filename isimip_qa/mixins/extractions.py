@@ -16,12 +16,16 @@ logger = logging.getLogger(__name__)
 class RemoteExtractionMixin:
 
     def fetch(self):
-        file_content = fetch_file(settings.EXTRACTIONS_LOCATIONS, self.path.relative_to(settings.EXTRACTIONS_PATH))
-        if file_content is not None:
-            logger.info('fetch %s', self.path)
-            self.path.parent.mkdir(exist_ok=True, parents=True)
-            self.path.open('wb').write(file_content)
-            return self.path
+        if settings.EXTRACTIONS_LOCATIONS:
+            path = self.path.relative_to(settings.EXTRACTIONS_PATH)
+            file_content = fetch_file(settings.EXTRACTIONS_LOCATIONS, path)
+            if file_content is not None:
+                logger.info('fetch %s', path)
+                self.path.parent.mkdir(exist_ok=True, parents=True)
+                self.path.open('wb').write(file_content)
+                return self.path
+            else:
+                logger.info('could not fetch %s', path)
 
 
 class CSVExtractionMixin:
