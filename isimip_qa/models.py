@@ -85,52 +85,88 @@ class Region:
 
 class Mask:
 
-    def __init__(self, mask_path):
-        self.ds = xr.load_dataset(settings.DATASETS_PATH / mask_path)
+    def __init__(self, path):
+        path = Path(path).expanduser()
+        if not path.is_absolute():
+            path = settings.DATASETS_PATH / path
+
+        self.ds = xr.load_dataset(path)
 
     def __getitem__(self, item):
         return self.ds[item]
 
 
+class Period:
+
+    def __init__(self, **kwargs):
+        self.type = kwargs['type']
+
+        if self.type == 'slice':
+            self.start_date = str(kwargs['start_date'])
+            self.end_date = str(kwargs['end_date'])
+
+
 class Extraction:
 
     region_types = None
+    period_types = None
 
-    def extract(self, dataset, region, file):
+    def __init__(self, dataset, region, period):
+        self.dataset = dataset
+        self.region = region
+        self.period = period
+
+    @property
+    def path(self):
         raise NotImplementedError
 
-    def fetch(self, dataset, region):
+    def exists(self):
+        return self.path.exists()
+
+    def fetch(self):
         raise NotImplementedError
 
-    def exists(self, dataset, region):
+    def extract(self, file):
         raise NotImplementedError
 
-    def write(self, ds, path, first):
+    def read(self):
         raise NotImplementedError
 
-    def read(self, dataset, region):
-        raise NotImplementedError
+    @classmethod
+    def has_region(cls, region):
+        return cls.region_types is None or region.type in cls.region_types
 
-    def has_region(self, region):
-        return self.region_types is None or region.type in self.region_types
+    @classmethod
+    def has_period(cls, period):
+        return cls.period_types is None or period.type in cls.period_types
 
 
-class Assessment:
+class Plot:
 
-    extractions = None
+    extraction_classes = None
     region_types = None
+    period_types = None
 
-    def __init__(self, datasets, **kwargs):
+    def __init__(self, extraction_class, datasets, region, period, **kwargs):
+        self.extraction_class = extraction_class
         self.datasets = datasets
+        self.region = region
+        self.period = period
 
-    def plot(self, extraction, region):
+    def create(self):
         raise NotImplementedError
 
-    def has_extraction(self, extraction):
-        return self.extractions is None or extraction.specifier in self.extractions
+    @classmethod
+    def has_extraction(cls, extraction):
+        return cls.extractions is None or extraction.specifier in cls.extractions
 
-    def has_region(self, region):
-        return self.region_types is None or region.type in self.region_types
+    @classmethod
+    def has_region(cls, region):
+        return cls.region_types is None or region.type in cls.region_types
+
+    @classmethod
+    def has_period(cls, period):
+        return cls.period_types is None or period.type in cls.period_types
 
 
 class Subplot:

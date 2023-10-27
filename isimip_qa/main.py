@@ -2,12 +2,11 @@ import logging
 
 from isimip_utils.parser import ArgumentParser
 
-from .assessments import assessment_classes
 from .config import settings
 from .extractions import extraction_classes
-from .models import Dataset, Region
+from .models import Dataset, Period, Region
 from .parser import ArgumentAction
-from .regions import regions_list
+from .plots import plot_classes
 
 logger = logging.getLogger(__name__)
 
@@ -21,35 +20,39 @@ def get_parser():
                         help='Values for the placeholders in the from placeholder=value1,value2,...')
 
     parser.add_argument('--datasets-path', dest='datasets_path',
-                        help='base path for the input datasets')
+                        help='Base path for the input datasets')
     parser.add_argument('--extractions-path', dest='extractions_path',
-                        help='base path for the output extractions')
-    parser.add_argument('--assessments-path', dest='assessments_path',
-                        help='base path for the output assessments')
+                        help='Base path for the created extractions')
+    parser.add_argument('--plots-path', dest='plots_path',
+                        help='Base path for the created plots')
 
-    parser.add_argument('-e', '--extractions', dest='extractions', default=None,
+    parser.add_argument('--extractions', dest='extractions', default=None,
                         help='Run only specific extractions (comma seperated)')
-    parser.add_argument('-a', '--assessments', dest='assessments', default=None,
-                        help='Run only specific assessments (comma seperated)')
+    parser.add_argument('--plots', dest='plots', default=None,
+                        help='Create only specific plots (comma seperated)')
     parser.add_argument('-r', '--regions', dest='regions', default='global',
-                        help='extract only specific regions (comma seperated)')
-    parser.add_argument('-g', '--grid', type=int, dest='grid', default=2, choices=[0, 1, 2],
-                        help='Maximum dimensions of the plot grid [default: 2]')
-    parser.add_argument('-p', '--primary', dest='primary', default=None,
-                        help='Treat these placeholders as primary and plot them in color [default: all]')
+                        help='Extract only specific regions (comma seperated)')
+    parser.add_argument('-p', '--periods', dest='periods', default=None,
+                        help='Extract only specific periods (comma seperated, format: YYYY_YYYY)')
+
+    parser.add_argument('-g', '--grid', type=int, dest='grid', default=0, choices=[0, 1, 2],
+                        help='Number of dimensions of the plot grid [default: 0, i.e. one plot]')
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                         help='Always run extractions')
     parser.add_argument('-l', '--load', dest='load', action='store_true', default=False,
                         help='Load NetCDF datasets completely in memory')
+
     parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,
-                        help='Run only assessments')
+                        help='Only create extractions')
     parser.add_argument('--extractions-locations', dest='extractions_locations',
                         default='https://files.isimip.org/qa/extractions/',
                         help='URL or file path to the locations of extractions to fetch')
-    parser.add_argument('--assessments-only', dest='assessments_only', action='store_true', default=False,
-                        help='Run only assessments')
-    parser.add_argument('--assessments-format', dest='assessments_format', default='svg',
-                        help='File format for assessment plots [default: png].')
+    parser.add_argument('--plots-only', dest='plots_only', action='store_true', default=False,
+                        help='Only create plots')
+    parser.add_argument('--plots-format', dest='plots_format', default='svg',
+                        help='File format for plots [default: svg].')
+    parser.add_argument('--primary', dest='primary', default=None,
+                        help='Treat these placeholders as primary and plot them in color [default: all]')
 
     parser.add_argument('--ymin', type=float, dest='ymin', default=None,
                         help='Fixed minimal y value for plots.')
@@ -71,6 +74,8 @@ def get_parser():
     parser.add_argument('--protocol-location', dest='protocol_locations',
                         default='https://protocol.isimip.org https://protocol2.isimip.org',
                         help='URL or file path to the protocol')
+    parser.add_argument('--regions-location', dest='regions_locations', default='',
+                        help='Use the provided files to create the regions.')
     parser.add_argument('--log-level', dest='log_level', default='WARN',
                         help='Log level (ERROR, WARN, INFO, or DEBUG)')
     parser.add_argument('--log-file', dest='log_file',
@@ -94,57 +99,53 @@ def main():
     settings.setup(args)
 
     # create list of datasets
-    datasets = []
-    for path in settings.DATASETS:
-        datasets.append(Dataset(path))
+    datasets = [Dataset(path) for path in settings.DATASETS]
 
-    # create list of regions
-    regions = [
-        Region(**region) for region in regions_list
-        if region['specifier'] in settings.REGIONS
-    ]
-
-    # create list of extractions
-    extractions = [
-        extraction_class() for extraction_class in extraction_classes
-        if settings.EXTRACTIONS is None
-        or extraction_class.specifier in settings.EXTRACTIONS
-    ]
-
-    # create list of assessments
-    assessments = [
-        assessment_class(datasets, dimensions=settings.PLACEHOLDERS, grid=settings.GRID, save=True)
-        for assessment_class in assessment_classes
-        if settings.ASSESSMENTS is None or assessment_class.specifier in settings.ASSESSMENTS
-    ]
+    # create list of regions and periods
+    regions = [Region(**region) for region in settings.REGIONS]
+    periods = [Period(**period) for period in settings.PERIODS]
 
     # run the extractions
-    if not settings.ASSESSMENTS_ONLY:
+    if not settings.PLOTS_ONLY:
         for dataset in datasets:
-            missing = set()
-            if not settings.FORCE:
-                # check if the extractions are already complete or if there some missing
-                for extraction in extractions:
-                    for region in regions:
-                        if extraction.has_region(region):
-                            if not (extraction.exists(dataset, region) or extraction.fetch(dataset, region)):
-                                missing.add((extraction, region))
+            extractions = []
+            for region in regions:
+                for period in periods:
+                    for extraction_class in extraction_classes:
+                        if (
+                            (settings.EXTRACTIONS is None or extraction_class.specifier in settings.EXTRACTIONS)
+                            and extraction_class.has_region(region)
+                            and extraction_class.has_period(period)
+                        ):
+                            extraction = extraction_class(dataset, region, period)
+                            if settings.FORCE or (not extraction.exists() and not extraction.fetch()):
+                                extractions.append(extraction)
 
-            if settings.FORCE or missing:
+            if extractions:
                 # if at least one extraction is not complete, perform extractions file by file
                 for file in dataset.files:
                     file.open()
                     for extraction in extractions:
-                        for region in regions:
-                            if settings.FORCE or (extraction, region) in missing:
-                                extraction.extract(dataset, region, file)
+                        extraction.extract(file)
                     file.close()
 
-    # run the assessments
+    # create the plots
     if not settings.EXTRACTIONS_ONLY:
-        for assessment in assessments:
-            for extraction in extractions:
-                if assessment.has_extraction(extraction):
-                    for region in regions:
-                        if extraction.has_region(region) and assessment.has_region(region):
-                            assessment.plot(extraction, region)
+        for plot_class in plot_classes:
+            for region in regions:
+                for period in periods:
+                    for extraction_class in extraction_classes:
+                        if (
+                            (settings.EXTRACTIONS is None or extraction_class.specifier in settings.EXTRACTIONS)
+                            and extraction_class.has_region(region)
+                            and extraction_class.has_period(period)
+                        ):
+                            if (
+                                (settings.PLOTS is None or plot_class.specifier in settings.PLOTS)
+                                and plot_class.has_extraction(extraction_class)
+                                and extraction_class.has_region(region)
+                                and extraction_class.has_period(period)
+                            ):
+                                plot = plot_class(extraction_class, datasets, region, period, save=True,
+                                                  dimensions=settings.PLACEHOLDERS, grid=settings.GRID)
+                                plot.create()

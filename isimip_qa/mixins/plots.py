@@ -1,177 +1,42 @@
-import itertools
-import json
 import logging
-from collections import defaultdict
-from itertools import product
+from itertools import chain, product
 
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import xarray as xr
 
-from isimip_utils.fetch import fetch_file
-
-from .config import settings
-from .exceptions import ExtractionNotFound
-from .models import Subplot
+from ..config import settings
+from ..exceptions import ExtractionNotFound
+from ..models import Subplot
 
 logger = logging.getLogger(__name__)
 
 
-class RemoteExtractionMixin:
-
-    def fetch(self, dataset, region):
-        path = self.get_path(dataset, region)
-        file_content = fetch_file(settings.EXTRACTIONS_LOCATIONS, path.relative_to(settings.EXTRACTIONS_PATH))
-        if file_content is not None:
-            logger.info('fetch %s', path)
-            path.parent.mkdir(exist_ok=True, parents=True)
-            path.open('wb').write(file_content)
-            return path
-
-
-class CSVExtractionMixin:
-
-    def get_path(self, dataset, region):
-        path = dataset.replace_name(region=region.specifier, extraction=self.specifier)
-        return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.csv')
-
-    def exists(self, dataset, region):
-        return self.get_path(dataset, region).exists()
-
-    def write(self, data, path, first):
-        if isinstance(data, xr.core.dataset.Dataset):
-            # this is a xarray dataset, so we convert it to a dataframe
-            ds = data
-            if set(ds.dims) == {'lon', 'lat', 'time'}:
-                dim_order = ('lon', 'lat', 'time')
-            elif set(ds.dims) == {'lon', 'lat'}:
-                dim_order = ('lon', 'lat')
-            else:
-                dim_order = tuple(ds.dims)
-
-            df = ds.to_dataframe(dim_order=dim_order)
-        else:
-            # this is a pandas dataframe
-            df = data
-
-        if first:
-            path.parent.mkdir(exist_ok=True, parents=True)
-            df.to_csv(path)
-        else:
-            df.to_csv(path, mode='a', header=False)
-
-    def read(self, dataset, region):
-        # pandas cannot handle datetimes before 1677-09-22 so we need to
-        # manually set every timestamp before to None using a custom date_parser
-        def parse_time(time):
-            try:
-                return pd.Timestamp(np.datetime64(time))
-            except pd.errors.OutOfBoundsDatetime:
-                return pd.NaT
-
-        # get the csv_path
-        path = self.get_path(dataset, region)
-
-        # read the dataframe from the csv
-        try:
-            df = pd.read_csv(path)
-        except FileNotFoundError as e:
-            raise ExtractionNotFound from e
-
-        if 'time' in df:
-            # parse the time axis of the dataframe
-            df['time'] = df['time'].apply(parse_time)
-
-            # remove all values without time
-            df = df[df.time.notnull()]
-            df.set_index('time', inplace=True)
-
-        return df
-
-
-class JSONExtractionMixin:
-
-    def get_path(self, dataset, region):
-        path = dataset.replace_name(region=region.specifier)
-        path = path.with_name(path.name + '_' + self.specifier)
-        return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.json')
-
-    def exists(self, dataset, region):
-        return self.get_path(dataset, region).exists()
-
-    def write(self, data, path):
-        path.parent.mkdir(exist_ok=True, parents=True)
-        json.dump(data, path.open('w'))
-
-    def read(self, dataset, region):
-        path = self.get_path(dataset, region)
-        return json.load(path.open())
-
-
-class NetCdfExtractionMixin:
-
-    def get_path(self, dataset, region):
-        path = dataset.replace_name(region=region.specifier)
-        path = path.with_name(path.name + '_' + self.specifier)
-        return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.nc')
-
-    def exists(self, dataset, region):
-        return self.get_path(dataset, region).exists()
-
-    def write(self, ds, path):
-        path.parent.mkdir(exist_ok=True, parents=True)
-
-        # remove globa attributes
-        ds.attrs = {}
-
-        ds.lat.attrs['_FillValue'] = 1.e+20
-        ds.lon.attrs['_FillValue'] = 1.e+20
-        ds.time.attrs['_FillValue'] = 1.e+20
-
-        ds.to_netcdf(path, unlimited_dims=['time'], format='NETCDF4_CLASSIC')
-
-    def read(self, dataset, region):
-        path = self.get_path(dataset, region)
-        return xr.load_dataset(settings.DATASETS_PATH / path)
-
-
-class ConcatExtractionMixin:
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.ds = defaultdict(dict)
-        self.n = defaultdict(dict)
-
-    def concat(self, dataset, region, ds, n):
-        if dataset not in self.ds:
-            self.ds[dataset] = {}
-            self.n[dataset] = {}
-
-        if region not in self.ds[dataset]:
-            self.ds[dataset][region] = ds
-            self.n[dataset][region] = n
-        else:
-            self.ds[dataset][region] += ds
-            self.n[dataset][region] += n
-
-
-class PlotMixin:
+class FigurePlotMixin:
 
     def __init__(self, *args, **kwargs):
         self.save = kwargs.pop('save', False)
         super().__init__(*args, **kwargs)
 
-    def save_figure(self, fig, path):
+    def write(self, fig, path):
         if self.save:
-            path = path.with_suffix(f'.{settings.ASSESSMENTS_FORMAT}')
+            path = path.with_suffix(f'.{settings.PLOTS_FORMAT}')
             path.parent.mkdir(exist_ok=True, parents=True)
 
             logger.info(f'save {path}')
-            fig.savefig(path, bbox_inches='tight')
+            try:
+                fig.savefig(path, bbox_inches='tight')
+            except ValueError as e:
+                logger.error(f'could not save {path} ({e})')
+        else:
+            plt.show()
+
+        plt.close()
+
+    def show(self):
+        plt.show()
+        plt.close()
 
 
-class GridPlotMixin(PlotMixin):
+class GridPlotMixin:
 
     colors = [
         '#1f77b4', '#ff7f0e', '#2ca02c',
@@ -193,11 +58,14 @@ class GridPlotMixin(PlotMixin):
 
     def get_figure(self, nrows, ncols, ratio=1):
         fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(6 * ratio * ncols, 6 * nrows))
-        for ax in itertools.chain.from_iterable(axs):
+        for ax in chain.from_iterable(axs):
             ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
         return fig, axs
 
-    def get_path(self, extraction, region, ifig=None):
+    def get_path(self, ifig=None):
+        if not settings.PATHS:
+            return None
+
         name = settings.PATHS[0].with_suffix('').name
 
         if self.dimensions:
@@ -224,12 +92,15 @@ class GridPlotMixin(PlotMixin):
 
         # overwrite _global_ with the region, this is not very elegant,
         # but after a lot (!) of experiments, this is the best solution ...
-        name = name.replace('_global_', '_' + region.specifier + '_')
+        name = name.replace('_global_', '_' + self.region.specifier + '_')
 
-        # add the extration and the assessment specifiers
-        name = name + '_' + extraction.specifier + '_' + self.specifier
+        # add the extration and the plot specifiers
+        name = f'{name}_{self.extraction_class.specifier}_{self.specifier}'
 
-        return settings.ASSESSMENTS_PATH / name
+        if self.period.type == 'slice':
+            name = f'{name}_{self.period.start_date}_{self.period.end_date}'
+
+        return settings.PLOTS_PATH / name
 
     def get_grid(self, figs=False):
         grid = [1, 1, 1] if figs else [1, 1]
@@ -244,7 +115,7 @@ class GridPlotMixin(PlotMixin):
                 if figs:
                     if j == self.grid:
                         grid[-1] = len(self.values[j])
-                    else:
+                    elif j > self.grid:
                         grid[-1] *= len(self.values[j])
 
         return reversed(grid)
@@ -297,7 +168,7 @@ class GridPlotMixin(PlotMixin):
         else:
             return True
 
-    def get_subplots(self, extraction, region):
+    def get_subplots(self):
         subplots = []
         for dataset_index, dataset in enumerate(self.datasets):
             # adjust the index when using multiple PATHS as input
@@ -309,12 +180,13 @@ class GridPlotMixin(PlotMixin):
             ifig, irow, icol = self.get_grid_indexes(index)
 
             try:
-                df = self.get_df(extraction, dataset, region)
+                df = self.get_df(dataset)
             except ExtractionNotFound:
                 continue
 
             try:
-                attrs = self.get_attrs(extraction, dataset, region)
+
+                attrs = self.get_attrs(dataset)
             except ExtractionNotFound:
                 attrs = {}
 
@@ -339,6 +211,12 @@ class GridPlotMixin(PlotMixin):
             subplots.append(subplot)
 
         return subplots
+
+    def get_df(self, dataset):
+        raise NotImplementedError
+
+    def get_attrs(self, dataset):
+        raise NotImplementedError
 
     def get_full_title(self, i):
         if self.dimensions:

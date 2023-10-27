@@ -1,31 +1,39 @@
 import logging
 
-from ..mixins import ConcatExtractionMixin, CSVExtractionMixin, RemoteExtractionMixin
+from ..mixins import CSVExtractionMixin, RemoteExtractionMixin
 from ..models import Extraction
 
 logger = logging.getLogger(__name__)
 
 
-class MeanMapExtraction(ConcatExtractionMixin, CSVExtractionMixin, RemoteExtractionMixin, Extraction):
+class CountMapExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
 
     specifier = 'countmap'
     region_types = ['global', 'mask']
 
-    def extract(self, dataset, region, file):
-        logger.info(f'extract {region.specifier} {self.specifier} from {file.path}')
+    def extract(self, file):
+        logger.info(f'extract {self.region.specifier} {self.specifier} from {file.path}')
 
-        if region.type == 'mask':
-            ds = file.ds.where(region.mask == 1).count(dim=('time',))
-        else:
-            ds = file.ds.count(dim=('time',))
+        ds = file.ds
 
-        n = len(file.ds.time)
+        if self.period.type == 'slice':
+            ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
 
-        self.concat(dataset, region, ds, n)
+        if ds.time.size > 0:
+
+            if self.region.type == 'mask':
+                ds = ds.where(self.region.mask == 1)
+
+            ds = ds.count(dim=('time',))
+
+            try:
+                self.ds += ds
+            except AttributeError:
+                self.ds = ds
 
         if file.last:
-            self.ds[dataset][region] = self.ds[dataset][region].where(self.ds[dataset][region] > 0)
+            # only consider values > 0
+            self.ds = self.ds.where(self.ds > 0)
 
-            path = self.get_path(dataset, region)
-            logger.info(f'write {path}')
-            self.write(self.ds[dataset][region], path, first=True)
+            logger.info(f'write {self.path}')
+            self.write(self.ds)

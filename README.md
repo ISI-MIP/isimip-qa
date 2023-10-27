@@ -41,49 +41,57 @@ The tool has several options which can be inspected using the help option `-h, -
 
 ```bash
 usage: isimip-qa [-h] [--datasets-path DATASETS_PATH] [--extractions-path EXTRACTIONS_PATH]
-                 [--assessments-path ASSESSMENTS_PATH] [-e EXTRACTIONS] [-a ASSESSMENTS]
-                 [-r REGIONS] [-g {0,1,2}] [-p PRIMARY] [-f] [-d] [-l] [--extractions-only]
-                 [--assessments-only] [--ymin YMIN] [--ymax YMAX] [--times TIMES] [--vmin VMIN]
-                 [--vmax VMAX] [--cmap CMAP] [--protocol-location PROTOCOL_LOCATIONS]
+                 [--plots-path PLOTS_PATH] [-e EXTRACTIONS] [-a PLOTS] [-r REGIONS] [-p PERIODS]
+                 [-g {0,1,2}] [-f] [-l] [--extractions-only]
+                 [--extractions-locations EXTRACTIONS_LOCATIONS] [--plots-only]
+                 [--plots-format PLOTS_FORMAT] [--primary PRIMARY] [--ymin YMIN] [--ymax YMAX]
+                 [--vmin VMIN] [--vmax VMAX] [--cmap CMAP] [--row-ranges] [--column-ranges]
+                 [--protocol-location PROTOCOL_LOCATIONS] [--regions-location REGIONS_LOCATIONS]
                  [--log-level LOG_LEVEL] [--log-file LOG_FILE]
-                 path [placeholders ...]
+                 [paths ...] [placeholders ...]
 
 positional arguments:
-  path                  Path of the dataset to process, can contain placeholders for specifiers,
-                        e.g. {model}
+  paths                 Paths of the datasets to process, can contain placeholders, e.g. {model}
   placeholders          Values for the placeholders in the from placeholder=value1,value2,...
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --datasets-path DATASETS_PATH
-                        base path for the input datasets
+                        Base path for the input datasets
   --extractions-path EXTRACTIONS_PATH
-                        base path for the output extractions
-  --assessments-path ASSESSMENTS_PATH
-                        base path for the output assessments
+                        Base path for the created extractions
+  --plots-path PLOTS_PATH
+                        Base path for the created plots
   -e EXTRACTIONS, --extractions EXTRACTIONS
                         Run only specific extractions (comma seperated)
-  -a ASSESSMENTS, --assessments ASSESSMENTS
-                        Run only specific assessments (comma seperated)
+  -a PLOTS, --plots PLOTS
+                        Create only specific plots (comma seperated)
   -r REGIONS, --regions REGIONS
-                        extract only specific regions (comma seperated)
+                        Extract only specific regions (comma seperated)
+  -p PERIODS, --periods PERIODS
+                        Extract only specific periods (comma seperated, format: YYYY_YYYY)
   -g {0,1,2}, --grid {0,1,2}
                         Maximum dimensions of the plot grid [default: 2]
-  -p PRIMARY, --primary PRIMARY
-                        Treat these placeholders as primary and plot them in color [default: all]
   -f, --force           Always run extractions
-  -d, --dask            Use dask to work on time chunks
   -l, --load            Load NetCDF datasets completely in memory
-  --extractions-only    Run only assessments
-  --assessments-only    Run only assessments
+  --extractions-only    Only create extractions
+  --extractions-locations EXTRACTIONS_LOCATIONS
+                        URL or file path to the locations of extractions to fetch
+  --plots-only          Only create plots
+  --plots-format PLOTS_FORMAT
+                        File format for plots [default: svg].
+  --primary PRIMARY     Treat these placeholders as primary and plot them in color [default: all]
   --ymin YMIN           Fixed minimal y value for plots.
   --ymax YMAX           Fixed maximum y value for plots.
-  --times TIMES         Time steps to use for maps (comma seperated)
   --vmin VMIN           Fixed minimal colormap value for maps.
   --vmax VMAX           Fixed maximum colormap value for maps.
   --cmap CMAP           Colormap to use for maps.
+  --row-ranges          Compute seperate plot ranges for each row.
+  --column-ranges       Compute seperate plot ranges for each column.
   --protocol-location PROTOCOL_LOCATIONS
                         URL or file path to the protocol
+  --regions-location REGIONS_LOCATIONS
+                        Use the provided files to create the regions.
   --log-level LOG_LEVEL
                         Log level (ERROR, WARN, INFO, or DEBUG)
   --log-file LOG_FILE   Path to the log file
@@ -91,13 +99,13 @@ optional arguments:
 
 The only mandatory argument is the path to an ISIMIP dataset, relative to the `DATASETS_PATH`, e.g. `ISIMIP3b/OutputData/water_global/CWatM/gfdl-esm4/historical/cwatm_gfdl-esm4_w5e5_historical_histsoc_default_qtot_global_daily`.
 
-It makes sense to set at least `DATASETS_PATH` (location the NetCDF input files), `EXTRACTIONS_PATH` (location of the csv extractions), and `ASSESSMENTS_PATH` (location of the plots) to different directories, either by command line options or by a config file (in `isimip.conf` in the same directory, `~/.isimip.conf`, or `/etc/isimip.conf`):
+It makes sense to set at least `DATASETS_PATH` (location the NetCDF input files), `EXTRACTIONS_PATH` (location of the csv extractions), and `PLOTS_PATH` (location of the plots) to different directories, either by command line options or by a config file (in `isimip.conf` in the same directory, `~/.isimip.conf`, or `/etc/isimip.conf`):
 
 ```
 [isimip-qa]
 datasets_path = ~/data/isimip/qa/datasets
 extractions_path = ~/data/isimip/qa/extractions
-assessments_path = ~/data/isimip/qa/assessments
+plots_path = ~/data/isimip/qa/plots
 
 log_level = INFO
 ```
@@ -138,7 +146,7 @@ settings = init_settings(
     protocol_path='ISIMIP3b/InputData/climate/atmosphere/bias-adjusted/',
     datasets_path='~/data/isimip/qa/datasets',
     extractions_path='~/data/isimip/qa/extractions',
-    assessments_path='~/data/isimip/qa/assessments'
+    plots_path='~/data/isimip/qa/plots'
 )
 ```
 

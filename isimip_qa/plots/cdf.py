@@ -1,30 +1,29 @@
 import logging
 
-import matplotlib.pyplot as plt
-
-from ..extractions.attrs import AttrsExtraction
-from ..mixins import GridPlotMixin
-from ..models import Assessment
+from ..extractions import AttrsExtraction
+from ..mixins import FigurePlotMixin, GridPlotMixin
+from ..models import Plot
 
 logger = logging.getLogger(__name__)
 
 
-class PDFAssessment(GridPlotMixin, Assessment):
+class CDFPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
-    specifier = 'pdf'
+    specifier = 'cdf'
     extractions = ['histogram']
 
-    def get_df(self, extraction, dataset, region):
-        df = extraction.read(dataset, region).set_index('bin')
-        return df / df.sum()
+    def get_df(self, dataset):
+        extraction = self.extraction_class(dataset, self.region, self.period)
+        df = extraction.read().set_index('bin')
+        return df.cumsum() / df.sum()
 
-    def get_attrs(self, extraction, dataset, region):
-        return AttrsExtraction().read(dataset, region)
+    def get_attrs(self, dataset):
+        return AttrsExtraction(dataset, self.region, self.period).read()
 
-    def plot(self, extraction, region):
-        logger.info(f'plot {extraction.specifier} {region.specifier}')
+    def create(self):
+        logger.info(f'plot {self.extraction_class.specifier} {self.specifier} {self.region.specifier}')
 
-        subplots = self.get_subplots(extraction, region)
+        subplots = self.get_subplots()
 
         nrows, ncols = self.get_grid()
         fig, axs = self.get_figure(nrows, ncols)
@@ -44,13 +43,14 @@ class PDFAssessment(GridPlotMixin, Assessment):
                 ax.step(sp.df.index, sp.df[sp.var], where='mid', color='grey', zorder=0)
 
             ax.set_title(sp.title)
-            ax.set_xlabel(sp.attrs.get("standard_name"))
-            ax.set_ylabel('PDF')
+            ax.set_xlabel(sp.attrs.get('standard_name'))
+            ax.set_ylabel('CDF')
             ax.set_ylim(ymin, ymax)
             ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
         if subplots:
-            path = self.get_path(extraction, region)
-            self.save_figure(fig, path)
-
-        plt.close()
+            if self.save:
+                path = self.get_path()
+                self.write(fig, path)
+            else:
+                self.show()

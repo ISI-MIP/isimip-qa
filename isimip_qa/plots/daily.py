@@ -1,29 +1,28 @@
 import logging
 
-import matplotlib.pyplot as plt
-
-from ..extractions.attrs import AttrsExtraction
-from ..mixins import GridPlotMixin
-from ..models import Assessment
+from ..extractions import AttrsExtraction
+from ..mixins import FigurePlotMixin, GridPlotMixin
+from ..models import Plot
 
 logger = logging.getLogger(__name__)
 
 
-class DailyAssessment(GridPlotMixin, Assessment):
+class DailyPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     specifier = 'daily'
     extractions = ['count', 'mean']
 
-    def get_df(self, extraction, dataset, region):
-        return extraction.read(dataset, region)
+    def get_df(self, dataset):
+        extraction = self.extraction_class(dataset, self.region, self.period)
+        return extraction.read()
 
-    def get_attrs(self, extraction, dataset, region):
-        return AttrsExtraction().read(dataset, region)
+    def get_attrs(self, dataset):
+        return AttrsExtraction(dataset, self.region, self.period).read()
 
-    def plot(self, extraction, region):
-        logger.info(f'plot {extraction.specifier} {region.specifier}')
+    def create(self):
+        logger.info(f'plot {self.extraction_class.specifier} {self.specifier} {self.region.specifier}')
 
-        subplots = self.get_subplots(extraction, region)
+        subplots = self.get_subplots()
 
         nrows, ncols = self.get_grid()
         fig, axs = self.get_figure(nrows, ncols)
@@ -48,7 +47,8 @@ class DailyAssessment(GridPlotMixin, Assessment):
             ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
         if subplots:
-            path = self.get_path(extraction, region)
-            self.save_figure(fig, path)
-
-        plt.close()
+            if self.save:
+                path = self.get_path()
+                self.write(fig, path)
+            else:
+                self.show()

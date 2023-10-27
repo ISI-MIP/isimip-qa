@@ -14,26 +14,50 @@ class HistogramExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction)
     specifier = 'histogram'
     region_types = ['global', 'mask', 'point']
 
-    def extract(self, dataset, region, file):
-        logger.info(f'extract {region.specifier} {self.specifier} from {file.path}')
+    def extract(self, file):
+        logger.info(f'extract {self.region.specifier} {self.specifier} from {file.path}')
 
-        if region.type == 'mask':
-            ds = file.ds.where(region.mask == 1)
-        elif region.type == 'point':
-            ds = file.ds.sel(lat=region.lat, lon=region.lon, method='nearest')
-        else:
-            ds = file.ds
+        ds = file.ds
 
-        var = next(iter(file.ds.data_vars.values()))
-        array = ds[var.name].as_numpy()
-        array_range = (array.min().values, array.max().values)
+        if self.period.type == 'slice':
+            ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
 
-        histogram = np.histogram(array, bins=100, range=array_range)
+        if ds.time.size > 0:
 
-        df = pd.DataFrame(data={
-            'count': histogram[0]
-        }, dtype=np.float64, index=pd.Index(histogram[1][1:], name='bin'))
+            if self.region.type == 'mask':
+                ds = ds.where(self.region.mask == 1)
+            elif self.region.type == 'point':
+                ds = ds.sel(lat=self.region.lat, lon=self.region.lon, method='nearest')
 
-        path = self.get_path(dataset, region)
-        logger.info(f'write {path}')
-        self.write(df, path, first=file.first)
+            var = next(iter(file.ds.data_vars.values()))
+            array = ds[var.name].as_numpy()
+            array_min = array.min().values
+            array_max = array.max().values
+
+            try:
+                # if the range of the file extends the range of the stored histogram,
+                # the range needs to be extended using the same step size
+                step = self.bins[1] - self.bins[0]
+                if array_min < self.bins[0]:
+                    extension = np.arange(self.bins[0] - step, array_min, step, dtype=np.float64)
+                    self.bins = np.concatenate((extension, self.bins))
+                if array_max > self.bins[-1]:
+                    extension = np.arange(self.bins[-1] + step, array_max, step, dtype=np.float64)
+                    self.bins = np.concatenate((self.bins, extension))
+            except AttributeError:
+                self.bins = np.linspace(array_min, array_max, num=101, endpoint=True, dtype=np.float64)
+
+            histogram = np.histogram(array, bins=self.bins)
+
+            df = pd.DataFrame(data={
+                'count': histogram[0]
+            }, index=pd.Index(histogram[1][:-1], name='bin'), dtype=np.int64)
+
+            try:
+                self.df = self.df.reindex(df.index, fill_value=0) + df
+            except AttributeError:
+                self.df = df
+
+        if file.last:
+            logger.info(f'write {self.path}')
+            self.write(self.df)

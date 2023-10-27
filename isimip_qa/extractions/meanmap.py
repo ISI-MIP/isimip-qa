@@ -1,37 +1,41 @@
 import logging
-from collections import defaultdict
 
-from ..mixins import ConcatExtractionMixin, CSVExtractionMixin, RemoteExtractionMixin
+from ..mixins import CSVExtractionMixin, RemoteExtractionMixin
 from ..models import Extraction
 
 logger = logging.getLogger(__name__)
 
 
-class MeanMapExtraction(ConcatExtractionMixin, CSVExtractionMixin, RemoteExtractionMixin, Extraction):
+class MeanMapExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
 
     specifier = 'meanmap'
     region_types = ['global', 'mask']
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.ds = defaultdict(dict)
-        self.n = defaultdict(dict)
+    def extract(self, file):
+        logger.info(f'extract {self.region.specifier} {self.specifier} from {file.path}')
 
-    def extract(self, dataset, region, file):
-        logger.info(f'extract {region.specifier} {self.specifier} from {file.path}')
+        ds = file.ds
 
-        if region.type == 'mask':
-            ds = file.ds.where(region.mask == 1).sum(dim=('time',), skipna=True, min_count=1)
-        else:
-            ds = file.ds.sum(dim=('time',), skipna=True, min_count=1)
+        if self.period.type == 'slice':
+            ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
 
-        n = len(file.ds.time)
+        if ds.time.size > 0:
 
-        self.concat(dataset, region, ds, n)
+            if self.region.type == 'mask':
+                ds = ds.where(self.region.mask == 1)
+
+            ds = ds.sum(dim=('time',), skipna=True, min_count=1)
+
+            try:
+                self.ds += ds
+                self.count += len(file.ds.time)
+            except AttributeError:
+                self.ds = ds
+                self.count = len(file.ds.time)
 
         if file.last:
-            self.ds[dataset][region] /= self.n[dataset][region]
+            # devide sum by count to get mean
+            self.ds /= self.count
 
-            path = self.get_path(dataset, region)
-            logger.info(f'write {path}')
-            self.write(self.ds[dataset][region], path, first=True)
+            logger.info(f'write {self.path}')
+            self.write(self.ds)
