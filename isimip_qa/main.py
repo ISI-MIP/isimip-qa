@@ -54,6 +54,8 @@ def get_parser():
                         help='File format for plots [default: svg].')
     parser.add_argument('--primary', dest='primary', default=None,
                         help='Treat these placeholders as primary and plot them in color [default: all]')
+    parser.add_argument('--gridarea', dest='gridarea', default=None,
+                        help='Use a CDO gridarea file instead of computing the gridarea when computing means')
 
     parser.add_argument('--ymin', type=float, dest='ymin', default=None,
                         help='Fixed minimal y value for plots.')
@@ -119,7 +121,7 @@ def main():
                             and extraction_class.has_region(region)
                             and extraction_class.has_period(period)
                         ):
-                            extraction = extraction_class(dataset, region, period)
+                            extraction = extraction_class(dataset, region, period, gridarea=settings.GRIDAREA)
                             if settings.FORCE or (not extraction.exists() and not extraction.fetch()):
                                 extractions.append(extraction)
 

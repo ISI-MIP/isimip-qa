@@ -3,6 +3,8 @@ from collections import defaultdict
 from itertools import product
 from pathlib import Path
 
+import xarray as xr
+
 from isimip_utils.config import Settings as BaseSettings
 from isimip_utils.decorators import cached_property
 from isimip_utils.fetch import fetch_json
@@ -125,6 +127,13 @@ class Settings(BaseSettings):
     @cached_property
     def PRIMARY(self):
         return self.args.get('PRIMARY').split(',') if self.args.get('PRIMARY') else []
+
+    @cached_property
+    def GRIDAREA(self):
+        if self.args.get('GRIDAREA'):
+            ds = xr.load_dataset(self.args.get('GRIDAREA'))
+            ds = ds.isel(lon=0)
+            return ds.cell_area
 
     @cached_property
     def REGIONS_LOCATIONS(self):

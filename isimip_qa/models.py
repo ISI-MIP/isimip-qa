@@ -111,10 +111,11 @@ class Extraction:
     region_types = None
     period_types = None
 
-    def __init__(self, dataset, region, period):
+    def __init__(self, dataset, region, period, gridarea=None):
         self.dataset = dataset
         self.region = region
         self.period = period
+        self.gridarea = gridarea
 
     @property
     def path(self):
