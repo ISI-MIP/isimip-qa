@@ -46,7 +46,7 @@ class File:
         self.last = last
 
     def open(self):
-        logger.info(f'load {self.path}')
+        logger.info(f'open {self.path}')
 
         try:
             self.ds = xr.open_dataset(self.path, chunks={'time': 'auto'})
@@ -61,9 +61,11 @@ class File:
                 self.ds['time'] = times
 
         if settings.LOAD:
+            logger.info(f'load {self.path}')
             self.ds.load()
 
     def close(self):
+        logger.info(f'close {self.path}')
         self.ds.close()
 
 
