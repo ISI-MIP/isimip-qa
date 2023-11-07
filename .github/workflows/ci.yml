@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - tests
   pull_request:
     paths:
       - '.github/workflows/**'
@@ -39,7 +40,7 @@ jobs:
 
     - name: Run pytest
       run: |
-        pytest --reuse-db --cov=isimip_data
+        pytest --cov
         coveralls --service=github
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
