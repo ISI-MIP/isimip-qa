@@ -1,3 +1,4 @@
+import hashlib
 import shutil
 from pathlib import Path
 
@@ -35,3 +36,14 @@ def settings(config):
         plots_path=plots_path,
         plots_format='png'
     )
+
+
+@pytest.fixture()
+def checksum():
+    def sha1_checksum(file_path):
+        h = hashlib.sha1()
+        with open(file_path, 'rb') as fp:
+            h.update(fp.read())
+        return h.hexdigest()
+
+    return sha1_checksum

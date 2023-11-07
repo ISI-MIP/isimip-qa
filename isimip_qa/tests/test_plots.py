@@ -1,4 +1,3 @@
-import filecmp
 from pathlib import Path
 
 import pytest
@@ -17,19 +16,17 @@ datasets = [
 @pytest.mark.parametrize('dataset_path', datasets)
 @pytest.mark.parametrize('extraction_class', extraction_classes)
 @pytest.mark.parametrize('plot_class', plot_classes)
-def test_mean_extraction(config, settings, dataset_path, extraction_class, plot_class):
+def test_mean_extraction(config, settings, checksum, dataset_path, extraction_class, plot_class):
     dataset = Dataset(dataset_path)
     if plot_class.has_extraction(extraction_class):
         plot = plot_class(extraction_class, [dataset], path=dataset.path.stem)
         plot.create()
-        print(plot.get_subplots())
+
         for sp in plot.get_subplots():
             assert sp.path.exists()
 
             if not config.init_files:
-                assert filecmp.cmp(
-                    sp.path,
+                assert checksum(sp.path) == checksum(
                     Path('testing').joinpath('plots')
-                                   .joinpath(sp.path.relative_to(settings.PLOTS_PATH)),
-                    shallow=False
+                                   .joinpath(sp.path.relative_to(settings.PLOTS_PATH))
                 )

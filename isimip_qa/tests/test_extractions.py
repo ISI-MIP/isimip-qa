@@ -1,4 +1,3 @@
-import filecmp
 from pathlib import Path
 
 import pytest
@@ -15,7 +14,7 @@ datasets = [
 
 @pytest.mark.parametrize('dataset_path', datasets)
 @pytest.mark.parametrize('extraction_class', extraction_classes)
-def test_extraction(config, settings, dataset_path, extraction_class):
+def test_extraction(config, settings, checksum, dataset_path, extraction_class):
     dataset = Dataset(dataset_path)
     extraction = extraction_class(dataset)
     extraction.path.unlink(missing_ok=True)
@@ -28,9 +27,7 @@ def test_extraction(config, settings, dataset_path, extraction_class):
     assert extraction.path.exists()
 
     if not config.init_files:
-        assert filecmp.cmp(
-            str(extraction.path),
-            str(Path('testing').joinpath('extractions')
-                           .joinpath(extraction.path.relative_to(settings.EXTRACTIONS_PATH))),
-            shallow=False
+        assert checksum(extraction.path) == checksum(
+            Path('testing').joinpath('extractions')
+                           .joinpath(extraction.path.relative_to(settings.EXTRACTIONS_PATH))
         )
