@@ -43,6 +43,7 @@ dev = [
     "build",
     "pre-commit",
     "pytest",
+    "pytest-cov",
     "ruff",
     "twine"
 ]
@@ -90,3 +91,18 @@ section-order = [
 
 [tool.ruff.isort.sections]
 isimip_utils = ["isimip_utils"]
+
+[tool.pytest.ini_options]
+testpaths = ["isimip_qa"]
+
+[tool.coverage.run]
+source = ["isimip_qa"]
+
+[tool.coverage.report]
+omit = [
+    "*/tests/*",
+]
+exclude_lines = [
+    "raise Exception",
+    "except ImportError:"
+]

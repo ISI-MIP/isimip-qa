@@ -1,11 +1,9 @@
 import filecmp
-import shutil
 from pathlib import Path
 
 import pytest
 
 from isimip_qa.extractions import extraction_classes
-from isimip_qa.main import init_settings
 from isimip_qa.models import Dataset
 
 datasets = [
@@ -14,20 +12,6 @@ datasets = [
     'point',
     'sine'
 ]
-
-@pytest.fixture(scope='module')
-def settings(config):
-    if config.init_files:
-        extractions_path = Path('testing') / 'extractions'
-    else:
-        extractions_path = Path('testing') / 'tmp'
-
-    shutil.rmtree(extractions_path, ignore_errors=True)
-
-    return init_settings(
-        datasets_path=Path('testing') / 'datasets',
-        extractions_path=extractions_path
-    )
 
 @pytest.mark.parametrize('dataset_path', datasets)
 @pytest.mark.parametrize('extraction_class', extraction_classes)
