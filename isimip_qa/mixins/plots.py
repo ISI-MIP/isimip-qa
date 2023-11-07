@@ -60,6 +60,7 @@ class GridPlotMixin:
             self.path = self.path.with_suffix('.' + settings.PLOTS_FORMAT)
 
         stem = self.path.stem
+        suffix = self.path.suffix
 
         if self.dimensions:
             placeholders = {}
@@ -96,7 +97,7 @@ class GridPlotMixin:
         if self.period.type == 'slice':
             stem = f'{stem}_{self.period.start_date}_{self.period.end_date}'
 
-        return settings.PLOTS_PATH / self.path.with_stem(stem)
+        return settings.PLOTS_PATH / self.path.with_name(stem).with_suffix(suffix)
 
     def get_grid(self, figs=False):
         grid = [1, 1, 1] if figs else [1, 1]
