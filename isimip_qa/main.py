@@ -150,6 +150,7 @@ def main():
                                 and extraction_class.has_region(region)
                                 and extraction_class.has_period(period)
                             ):
-                                plot = plot_class(extraction_class, datasets, region, period, save=True,
-                                                  dimensions=settings.PLACEHOLDERS, grid=settings.GRID)
+                                plot = plot_class(extraction_class, datasets, region, period,
+                                                  path=settings.PATHS[0].stem, dimensions=settings.PLACEHOLDERS,
+                                                  grid=settings.GRID)
                                 plot.create()

@@ -113,10 +113,10 @@ class Extraction:
     region_types = None
     period_types = None
 
-    def __init__(self, dataset, region, period, gridarea=None):
+    def __init__(self, dataset, region=None, period=None, gridarea=None):
         self.dataset = dataset
-        self.region = region
-        self.period = period
+        self.region = region or Region(type='global', specifier='global')
+        self.period = period or Period(type='auto')
         self.gridarea = gridarea
 
     @property
@@ -150,11 +150,11 @@ class Plot:
     region_types = None
     period_types = None
 
-    def __init__(self, extraction_class, datasets, region, period, **kwargs):
+    def __init__(self, extraction_class, datasets, region=None, period=None, **kwargs):
         self.extraction_class = extraction_class
         self.datasets = datasets
-        self.region = region
-        self.period = period
+        self.region = region or Region(type='global', specifier='global')
+        self.period = period or Period(type='auto')
 
     def create(self):
         raise NotImplementedError

@@ -18,4 +18,6 @@ __pycache__/
 /.env
 *.sh
 
+testing/tmp
+
 .ipynb_checkpoints

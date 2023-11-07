@@ -42,8 +42,9 @@ isimip-qa = "isimip_qa.main:main"
 dev = [
     "build",
     "pre-commit",
+    "pytest",
     "ruff",
-    "twine",
+    "twine"
 ]
 
 [tool.setuptools]

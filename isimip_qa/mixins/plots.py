@@ -1,5 +1,6 @@
 import logging
 from itertools import chain, product
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
@@ -12,23 +13,14 @@ logger = logging.getLogger(__name__)
 
 class FigurePlotMixin:
 
-    def __init__(self, *args, **kwargs):
-        self.save = kwargs.pop('save', False)
-        super().__init__(*args, **kwargs)
-
     def write(self, fig, path):
-        if self.save:
-            path = path.with_suffix(f'.{settings.PLOTS_FORMAT}')
-            path.parent.mkdir(exist_ok=True, parents=True)
+        path.parent.mkdir(exist_ok=True, parents=True)
 
-            logger.info(f'write {path}')
-            try:
-                fig.savefig(path, bbox_inches='tight')
-            except ValueError as e:
-                logger.error(f'could not save {path} ({e})')
-        else:
-            plt.show()
-
+        logger.info(f'write {path}')
+        try:
+            fig.savefig(path, bbox_inches='tight')
+        except ValueError as e:
+            logger.error(f'could not save {path} ({e})')
         plt.close()
 
     def show(self):
@@ -46,9 +38,10 @@ class GridPlotMixin:
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
     markers = ['.', '*', 'D', 's']
 
-    def __init__(self, *args, **kwargs):
-        self.dimensions = kwargs.pop('dimensions', None)
-        self.grid = kwargs.pop('grid', 2)
+    def __init__(self, *args, path=None, dimensions=None, grid=2, **kwargs):
+        self.path = Path(path)
+        self.dimensions = dimensions
+        self.grid = grid
         if self.dimensions:
             self.keys = list(self.dimensions.keys())
             self.values = list(self.dimensions.values())
@@ -62,11 +55,11 @@ class GridPlotMixin:
             ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
         return fig, axs
 
-    def get_path(self, ifig=None):
-        if not settings.PATHS:
-            return None
+    def get_path(self, ifig):
+        if not self.path.suffix:
+            self.path = self.path.with_suffix('.' + settings.PLOTS_FORMAT)
 
-        name = settings.PATHS[0].with_suffix('').name
+        stem = self.path.stem
 
         if self.dimensions:
             placeholders = {}
@@ -88,19 +81,22 @@ class GridPlotMixin:
                 placeholders[key] = '+'.join(values_strings).lower()
 
             # apply placeholders
-            name = name.format(**placeholders)
+            stem = stem.format(**placeholders)
 
         # overwrite _global_ with the region, this is not very elegant,
         # but after a lot (!) of experiments, this is the best solution ...
-        name = name.replace('_global_', '_' + self.region.specifier + '_')
+        if '_global_' in stem:
+            stem = stem.replace('_global_', '_' + self.region.specifier + '_')
+        else:
+            stem += '_global'
 
         # add the extration and the plot specifiers
-        name = f'{name}_{self.extraction_class.specifier}_{self.specifier}'
+        stem = f'{stem}_{self.extraction_class.specifier}_{self.specifier}'
 
         if self.period.type == 'slice':
-            name = f'{name}_{self.period.start_date}_{self.period.end_date}'
+            stem = f'{stem}_{self.period.start_date}_{self.period.end_date}'
 
-        return settings.PLOTS_PATH / name
+        return settings.PLOTS_PATH / self.path.with_stem(stem)
 
     def get_grid(self, figs=False):
         grid = [1, 1, 1] if figs else [1, 1]
@@ -205,7 +201,8 @@ class GridPlotMixin:
                 ifig=ifig,
                 irow=irow,
                 icol=icol,
-                primary=self.get_primary(index)
+                primary=self.get_primary(index),
+                path=self.get_path(ifig)
             )
 
             subplots.append(subplot)

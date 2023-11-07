@@ -46,9 +46,8 @@ class DailyPlot(FigurePlotMixin, GridPlotMixin, Plot):
                 ax.set_ylim(ymin, ymax)
                 ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
-            if self.save:
-                path = self.get_path()
-                self.write(fig, path)
+            if self.path:
+                self.write(fig, sp.path)
             else:
                 self.show()
         else:

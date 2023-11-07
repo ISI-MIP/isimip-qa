@@ -143,4 +143,5 @@ class Settings(BaseSettings):
     def EXTRACTIONS_LOCATIONS(self):
         return self.args.get('EXTRACTIONS_LOCATIONS').split()
 
+
 settings = Settings()
