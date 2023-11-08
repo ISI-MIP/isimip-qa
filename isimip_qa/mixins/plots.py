@@ -39,7 +39,7 @@ class GridPlotMixin:
     markers = ['.', '*', 'D', 's']
 
     def __init__(self, *args, path=None, dimensions=None, grid=2, **kwargs):
-        self.path = Path(path)
+        self.path = Path(path) if path else None
         self.dimensions = dimensions
         self.grid = grid
         if self.dimensions:
@@ -56,6 +56,9 @@ class GridPlotMixin:
         return fig, axs
 
     def get_path(self, ifig):
+        if self.path is None:
+            return None
+
         if not self.path.suffix:
             self.path = self.path.with_suffix('.' + settings.PLOTS_FORMAT)
 
