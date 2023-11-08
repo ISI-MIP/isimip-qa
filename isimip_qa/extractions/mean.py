@@ -22,7 +22,7 @@ class MeanExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
             ds = ds.sel(time=slice(self.period.start_date, self.period.end_date))
 
         if self.region.type == 'point':
-            ds = ds.sel(lat=self.region.lat, loqn=self.region.lon, method='nearest')
+            ds = ds.sel(lat=self.region.lat, lon=self.region.lon, method='nearest')
         else:
             if self.region.type == 'mask':
                 ds = ds.where(self.region.mask == 1)
