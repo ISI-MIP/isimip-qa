@@ -1,6 +1,7 @@
 import shutil
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -41,13 +42,20 @@ def test_extraction(settings, dataset_path, extraction_class):
     assert extraction.path.exists()
     assert extraction.path.suffix in ['.csv', '.json']
 
-    template_path = Path('testing').joinpath('extractions') \
-                                   .joinpath(extraction.path.relative_to(settings.EXTRACTIONS_PATH))
+    # compare to the template extraction
+    template_path = Path('testing') / 'extractions' / extraction.path.relative_to(settings.EXTRACTIONS_PATH)
 
     if extraction.path.suffix == '.csv':
-        pd.testing.assert_frame_equal(
-            pd.read_csv(extraction.path),
-            pd.read_csv(template_path)
-        )
+        df = pd.read_csv(extraction.path)
+        template_df = pd.read_csv(template_path)
+        pd.testing.assert_frame_equal(df, template_df)
     else:
         assert extraction.path.read_text() == template_path.read_text()
+
+    # compare to the cdo extraction
+    if extraction.specifier == 'mean':
+        df = pd.read_csv(extraction.path)
+        cdo_path = Path('testing') / 'cdo' / f'{dataset_path}_fldmean.csv'
+        cdo_df = pd.read_csv(cdo_path, delim_whitespace=True, names=['time', 'var'])
+        cdo_df['var'] = cdo_df['var'].astype(np.float64)
+        pd.testing.assert_frame_equal(df, cdo_df)
