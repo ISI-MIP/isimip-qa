@@ -15,6 +15,7 @@ class MapPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     specifier = 'map'
     extractions = ['meanmap', 'countmap']
+    max_dimensions = 0
 
     def get_df(self, dataset):
         extraction = self.extraction_class(dataset, self.region, self.period)
@@ -26,10 +27,11 @@ class MapPlot(FigurePlotMixin, GridPlotMixin, Plot):
     def create(self):
         logger.info(f'plot {self.region.specifier} {self.extraction_class.specifier} {self.specifier}')
 
+        nfigs, nrows, ncols = self.get_grid()
         subplots = self.get_subplots()
         if subplots:
             # get the extension of the valid data for all datasets
-            lonmin, lonmax, latmin, latmax, ratio = -180, 180, -90, 90, 3.0
+            lonmin, lonmax, latmin, latmax, ratio = -180, 180, -90, 90, 2.0
             if self.region.specifier != 'global':
                 for sp in subplots:
                     sp_lon = sp.df['lon'].unique()
@@ -50,46 +52,47 @@ class MapPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
                 ratio = max((lonmax - lonmin) / (latmax - latmin), 1.0)
 
-            nfigs, nrows, ncols = self.get_grid(figs=True)
-
             for ifig in range(nfigs):
+                fig_path = self.get_figure_path(ifig)
                 fig_subplots = [sp for sp in subplots if sp.ifig == ifig]
 
-                fig, axs = self.get_figure(nrows, ncols, ratio=ratio)
-                plt.subplots_adjust(top=1.1)
+                if fig_subplots:
+                    fig, axs = self.get_figure(nrows, ncols, ratio=ratio)
 
-                cbars = []
-                for sp in fig_subplots:
-                    ax = axs.item(sp.irow, sp.icol)
+                    cbars = []
+                    for sp in fig_subplots:
+                        ax = axs.item(sp.irow, sp.icol)
 
-                    vmin = self.get_vmin(sp, subplots)
-                    vmax = self.get_vmax(sp, subplots)
+                        vmin = self.get_vmin(sp, subplots)
+                        vmax = self.get_vmax(sp, subplots)
 
-                    df_pivot = sp.df.pivot(index='lat', columns=['lon'], values=sp.var)
-                    df_pivot = df_pivot.reindex(index=df_pivot.index[::-1])
+                        df_pivot = sp.df.pivot(index='lat', columns=['lon'], values=sp.var)
+                        df_pivot = df_pivot.reindex(index=df_pivot.index[::-1])
 
-                    # truncate the dataframe at the extensions
-                    df_pivot = df_pivot.truncate(before=latmin, after=latmax)
-                    df_pivot = df_pivot.truncate(before=lonmin, after=lonmax, axis=1)
+                        # truncate the dataframe at the extensions
+                        df_pivot = df_pivot.truncate(before=latmin, after=latmax)
+                        df_pivot = df_pivot.truncate(before=lonmin, after=lonmax, axis=1)
 
-                    im = ax.imshow(df_pivot, interpolation='nearest', label=sp.label,
-                                   extent=[lonmin, lonmax, latmin, latmax],
-                                   vmin=vmin, vmax=vmax, cmap=settings.CMAP)
+                        im = ax.imshow(df_pivot, interpolation='nearest', label=sp.label,
+                                       extent=[lonmin, lonmax, latmin, latmax],
+                                       vmin=vmin, vmax=vmax, cmap=settings.CMAP)
 
-                    ax.set_title(sp.full_title, fontsize=10)
-                    ax.set_xlabel('lon', fontsize=10)
-                    ax.set_ylabel('lat', fontsize=10)
-                    ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
+                        if sp.title and sp.label:
+                            ax.set_title(f'{sp.title} {sp.label}', fontsize=10)
 
-                    if ax not in cbars:
-                        cbar = plt.colorbar(im, ax=ax)
-                        cbar.set_label(f'{sp.var} [{sp.attrs.get("units")}]')
-                        cbar.set_ticks([vmin, vmax])
-                        cbars.append(ax)
+                        ax.set_xlabel('lon', fontsize=10)
+                        ax.set_ylabel('lat', fontsize=10)
+                        ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
-                if self.path:
-                    self.write(fig, sp.path)
-                else:
-                    self.show()
-            else:
-                logger.info('nothing to plot')
+                        if ax not in cbars:
+                            cbar = plt.colorbar(im, ax=ax)
+                            cbar.set_label(f'{sp.var} [{sp.attrs.get("units")}]')
+                            cbar.set_ticks([vmin, vmax])
+                            cbars.append(ax)
+
+                    if fig_path:
+                        self.write(fig, fig_path)
+                    else:
+                        self.show()
+        else:
+            logger.info('nothing to plot')

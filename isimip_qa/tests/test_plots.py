@@ -40,13 +40,15 @@ def test_plot(settings, dataset_path, extraction_class, plot_class):
         plot = plot_class(extraction_class, [dataset], path=dataset.path.stem)
         plot.create()
 
-        for sp in plot.get_subplots():
-            assert sp.path.exists()
+        nfigs, nrows, ncols = plot.get_grid()
+        for ifig in range(nfigs):
+            fig_path = plot.get_figure_path(ifig)
+            assert fig_path.exists()
 
-            img = imread(sp.path, as_gray=True)
+            img = imread(fig_path, as_gray=True)
 
             template_path = Path('testing').joinpath('plots') \
-                                           .joinpath(sp.path.relative_to(settings.PLOTS_PATH))
+                                           .joinpath(fig_path.relative_to(settings.PLOTS_PATH))
             template_img = imread(template_path, as_gray=True)
 
             similarity = ssim(img, template_img, data_range=template_img.max() - template_img.min())

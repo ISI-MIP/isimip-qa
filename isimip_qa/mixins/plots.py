@@ -1,4 +1,5 @@
 import logging
+import sys
 from itertools import chain, product
 from pathlib import Path
 
@@ -18,7 +19,7 @@ class FigurePlotMixin:
 
         logger.info(f'write {path}')
         try:
-            fig.savefig(path, bbox_inches='tight')
+            fig.savefig(path)
         except ValueError as e:
             logger.error(f'could not save {path} ({e})')
         plt.close()
@@ -37,25 +38,32 @@ class GridPlotMixin:
     ]
     linestyles = ['solid', 'dashed', 'dashdot', 'dotted']
     markers = ['.', '*', 'D', 's']
+    max_dimensions = sys.maxsize
 
-    def __init__(self, *args, path=None, dimensions=None, grid=2, **kwargs):
+    def __init__(self, *args, path=None, dimensions=None, grid=0, figs=0, **kwargs):
         self.path = Path(path) if path else None
         self.dimensions = dimensions
         self.grid = grid
+        self.figs = figs
+
         if self.dimensions:
-            self.keys = list(self.dimensions.keys())
-            self.values = list(self.dimensions.values())
-            self.permutations = list(product(*self.values))
+            self.dimensions_keys = list(self.dimensions.keys())
+            self.dimensions_values = list(self.dimensions.values())
+            self.dimensions_len = len(self.dimensions_keys)
+            self.permutations = list(product(*self.dimensions_values))
             self.styles = self.get_styles()
+            self.figs = max(self.figs, self.dimensions_len - self.grid - self.max_dimensions)
+
         super().__init__(*args, **kwargs)
 
     def get_figure(self, nrows, ncols, ratio=1):
-        fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(6 * ratio * ncols, 6 * nrows))
+        fig, axs = plt.subplots(nrows, ncols, squeeze=False, figsize=(6 * ratio * ncols, 6 * nrows),
+                                constrained_layout=True)
         for ax in chain.from_iterable(axs):
             ax.tick_params(bottom=False, labelbottom=False, left=False, labelleft=False)
         return fig, axs
 
-    def get_path(self, ifig):
+    def get_figure_path(self, ifig=0):
         if self.path is None:
             return None
 
@@ -68,18 +76,18 @@ class GridPlotMixin:
         if self.dimensions:
             placeholders = {}
 
-            for j, key in enumerate(self.keys):
-                if ifig is None or j < self.grid:
-                    primary_values = [value for value in self.values[j] if value in settings.PRIMARY]
+            for j, key in enumerate(self.dimensions_keys):
+                if (j < self.grid) or (j < self.dimensions_len - self.figs):
+                    # for the first dimensions, which are not figure dimensions, combine the values
+                    primary_values = [value for value in self.dimensions_values[j] if value in settings.PRIMARY]
                     if primary_values:
                         values_strings = primary_values
-                    elif len(self.values[j]) < 10:
-                        values_strings = self.values[j]
+                    elif len(self.dimensions_values[j]) < 10:
+                        values_strings = self.dimensions_values[j]
                     else:
                         values_strings = ['various']
                 else:
-                    # this works because for j > self.grid, the permutations
-                    # only repeat with a "period" of nfig
+                    # for the last self.figs dimensions, which generate seperate figures, take seperate values
                     values_strings = [self.permutations[ifig][j]]
 
                 placeholders[key] = '+'.join(values_strings).lower()
@@ -102,21 +110,19 @@ class GridPlotMixin:
 
         return settings.PLOTS_PATH / self.path.with_name(stem).with_suffix(suffix)
 
-    def get_grid(self, figs=False):
-        grid = [1, 1, 1] if figs else [1, 1]
+    def get_grid(self):
+        grid = [1, 1, 1]
 
         if self.dimensions:
-            for j, key in enumerate(self.keys):
+            for j, key in enumerate(self.dimensions_keys):
                 ndim = len(self.dimensions[key])
 
                 if j < self.grid:
+                    # the grid dimensions generate rows and columns
                     grid[j] = ndim
-
-                if figs:
-                    if j == self.grid:
-                        grid[-1] = len(self.values[j])
-                    elif j > self.grid:
-                        grid[-1] *= len(self.values[j])
+                elif (j >= self.dimensions_len - self.figs):
+                    # the last self.figs dimensions multiply the number of seperate figures
+                    grid[-1] *= len(self.dimensions_values[j])
 
         return reversed(grid)
 
@@ -126,16 +132,25 @@ class GridPlotMixin:
         if self.dimensions:
             permutation = self.permutations[i]
 
-            for j, key in enumerate(self.keys):
+            for j, key in enumerate(self.dimensions_keys):
                 value = permutation[j]
                 value_index = self.dimensions[key].index(value)
 
                 if j < self.grid:
+                    # the first dimensions indicate the column and the row
                     grid_indexes[j] = value_index
-                elif j == len(self.keys) - 1:
-                    grid_indexes[-1] += value_index
-                else:
-                    grid_indexes[-1] += value_index * len(self.values[j+1])
+                elif self.figs > 0:
+                    # the figure index is computed like this:
+                    # lets assume self.figs = 3 and i3,i2,i1 are the indexes of dimensions d3,d2,d1
+                    # the figure index is i1 + i2 * len(d1) + i3 * len(d1) * len(d2)
+                    if j == self.dimensions_len - 1:
+                        # the last value_index just adds to the figure index
+                        grid_indexes[-1] += value_index
+                    elif j >= self.dimensions_len - self.figs:
+                        # the other value_indexes need be multiplied by the lenghts of the dimensions to the right
+                        for values in self.dimensions_values[j+1:]:
+                            value_index *= len(values)
+                        grid_indexes[-1] += value_index
 
         return reversed(grid_indexes)
 
@@ -160,7 +175,7 @@ class GridPlotMixin:
         if self.dimensions and settings.PRIMARY:
             permutation = self.permutations[i]
 
-            for j, key in enumerate(self.keys):
+            for j, key in enumerate(self.dimensions_keys):
                 if permutation[j] in settings.PRIMARY:
                     return True
 
@@ -185,7 +200,6 @@ class GridPlotMixin:
                 continue
 
             try:
-
                 attrs = self.get_attrs(dataset)
             except ExtractionNotFound:
                 attrs = {}
@@ -198,15 +212,13 @@ class GridPlotMixin:
                 var=var,
                 label=self.get_label(index),
                 title=self.get_title(index),
-                full_title=self.get_full_title(index),
                 color=self.get_color(index),
                 linestyle=self.get_linestyle(index),
                 marker=self.get_marker(index),
                 ifig=ifig,
                 irow=irow,
                 icol=icol,
-                primary=self.get_primary(index),
-                path=self.get_path(ifig)
+                primary=self.get_primary(index)
             )
 
             subplots.append(subplot)
@@ -218,10 +230,6 @@ class GridPlotMixin:
 
     def get_attrs(self, dataset):
         raise NotImplementedError
-
-    def get_full_title(self, i):
-        if self.dimensions:
-            return ' '.join(self.permutations[i])
 
     def get_title(self, i):
         if self.dimensions:

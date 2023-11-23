@@ -36,8 +36,6 @@ def get_parser():
     parser.add_argument('-p', '--periods', dest='periods', default=None,
                         help='Extract only specific periods (comma seperated, format: YYYY_YYYY)')
 
-    parser.add_argument('-g', '--grid', type=int, dest='grid', default=0, choices=[0, 1, 2],
-                        help='Number of dimensions of the plot grid [default: 0, i.e. one plot]')
     parser.add_argument('-f', '--force', dest='force', action='store_true', default=False,
                         help='Always run extractions')
     parser.add_argument('-l', '--load', dest='load', action='store_true', default=False,
@@ -56,6 +54,10 @@ def get_parser():
                         help='Treat these placeholders as primary and plot them in color [default: all]')
     parser.add_argument('--gridarea', dest='gridarea', default=None,
                         help='Use a CDO gridarea file instead of computing the gridarea when computing means')
+    parser.add_argument('--grid', type=int, dest='grid', default=0, choices=[0, 1, 2],
+                        help='Number of dimensions of the plot grid [default: 0, i.e. no grid]')
+    parser.add_argument('--figs', type=int, dest='figs', default=0,
+                        help='Number of placeholders which generate seperate figures [default: 0]')
 
     parser.add_argument('--ymin', type=float, dest='ymin', default=None,
                         help='Fixed minimal y value for plots.')
@@ -152,5 +154,5 @@ def main():
                             ):
                                 plot = plot_class(extraction_class, datasets, region, period,
                                                   path=settings.PATHS[0].stem, dimensions=settings.PLACEHOLDERS,
-                                                  grid=settings.GRID)
+                                                  grid=settings.GRID, figs=settings.FIGS)
                                 plot.create()
