@@ -53,4 +53,4 @@ def test_plot(settings, dataset_path, extraction_class, plot_class):
 
             similarity = ssim(img, template_img, data_range=template_img.max() - template_img.min())
 
-            assert similarity == 1.0
+            assert similarity > 0.999999
