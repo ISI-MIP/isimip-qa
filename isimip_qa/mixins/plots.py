@@ -47,13 +47,13 @@ class GridPlotMixin:
         self.dimensions = dimensions
         self.grid = grid
         self.figs = figs
+        self.styles = {}
 
         if self.dimensions:
             self.dimensions_keys = list(self.dimensions.keys())
             self.dimensions_values = list(self.dimensions.values())
             self.dimensions_len = len(self.dimensions_keys)
             self.permutations = list(product(*self.dimensions_values))
-            self.styles = self.get_styles()
             self.figs = max(self.figs, self.dimensions_len - self.grid - self.max_dimensions)
 
         super().__init__(*args, **kwargs)
@@ -156,35 +156,6 @@ class GridPlotMixin:
 
         return reversed(grid_indexes)
 
-    def get_styles(self):
-        # create a specific style for each label
-        styles = {}
-        for permutation in self.permutations:
-            label = permutation[self.grid:]
-            if label not in styles:
-                index = len(styles.keys())
-                color_index = index % len(self.colors)
-                linestyle_index = int(index / len(self.colors)) % len(self.linestyles)
-                marker_index = int(index / len(self.colors)) % len(self.markers)
-                styles[label] = (
-                    self.colors[color_index],
-                    self.linestyles[linestyle_index],
-                    self.markers[marker_index]
-                )
-        return styles
-
-    def get_primary(self, i):
-        if self.dimensions and settings.PRIMARY:
-            permutation = self.permutations[i]
-
-            for j, key in enumerate(self.dimensions_keys):
-                if permutation[j] in settings.PRIMARY:
-                    return True
-
-            return False
-        else:
-            return True
-
     def get_subplots(self):
         subplots = []
         for dataset_index, dataset in enumerate(self.datasets):
@@ -208,19 +179,29 @@ class GridPlotMixin:
 
             var = df.columns[-1]
 
+            primary = self.get_primary(index)
+
+            if primary:
+                color, linestyle, marker = self.get_style(index)
+            else:
+                color = 'gray'
+                linestyle = '-'
+                marker = '.'
+
             subplot = Subplot(
                 df=df,
                 attrs=attrs,
                 var=var,
-                label=self.get_label(index),
-                title=self.get_title(index),
-                color=self.get_color(index),
-                linestyle=self.get_linestyle(index),
-                marker=self.get_marker(index),
+                label=self.get_label(index) if primary else None,
+                title=self.get_title(index) if primary else None,
+                color=color,
+                linestyle=linestyle,
+                marker=marker,
+                zorder=10 if primary else 0,
                 ifig=ifig,
                 irow=irow,
                 icol=icol,
-                primary=self.get_primary(index)
+                primary=primary
             )
 
             subplots.append(subplot)
@@ -233,6 +214,18 @@ class GridPlotMixin:
     def get_attrs(self, dataset):
         raise NotImplementedError
 
+    def get_primary(self, i):
+        if self.dimensions and settings.PRIMARY:
+            permutation = self.permutations[i]
+
+            for j, key in enumerate(self.dimensions_keys):
+                if permutation[j] in settings.PRIMARY:
+                    return True
+
+            return False
+        else:
+            return True
+
     def get_title(self, i):
         if self.dimensions:
             return ' '.join(self.permutations[i][:self.grid])
@@ -241,17 +234,22 @@ class GridPlotMixin:
         if self.dimensions:
             return ' '.join(self.permutations[i][self.grid:])
 
-    def get_color(self, i):
+    def get_style(self, i):
         if self.dimensions:
-            return self.styles[self.permutations[i][self.grid:]][0]
-
-    def get_linestyle(self, i):
-        if self.dimensions:
-            return self.styles[self.permutations[i][self.grid:]][1]
-
-    def get_marker(self, i):
-        if self.dimensions:
-            return self.styles[self.permutations[i][self.grid:]][2]
+            label = self.permutations[i][self.grid:]
+            if label not in self.styles:
+                index = len(self.styles.keys())
+                color_index = index % len(self.colors)
+                linestyle_index = int(index / len(self.colors)) % len(self.linestyles)
+                marker_index = int(index / len(self.colors)) % len(self.markers)
+                self.styles[label] = (
+                    self.colors[color_index],
+                    self.linestyles[linestyle_index],
+                    self.markers[marker_index]
+                )
+            return self.styles[label]
+        else:
+            return self.colors[0], self.linestyles[0], self.markers[0]
 
     def get_ymin(self, subplot, subplots):
         if settings.YMIN is None:

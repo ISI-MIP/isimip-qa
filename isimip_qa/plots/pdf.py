@@ -39,13 +39,11 @@ class PDFPlot(FigurePlotMixin, GridPlotMixin, Plot):
                         ymin = self.get_ymin(sp, subplots)
                         ymax = self.get_ymax(sp, subplots)
 
-                        if sp.primary:
-                            ax.step(sp.df.index, sp.df[sp.var], where='mid', label=sp.label, zorder=10,
-                                    color=sp.color, linestyle=sp.linestyle)
-                            if sp.label:
-                                ax.legend(loc='best').set_zorder(20)
-                        else:
-                            ax.step(sp.df.index, sp.df[sp.var], where='mid', zorder=0, color='grey')
+                        ax.step(sp.df.index, sp.df[sp.var], where='mid', label=sp.label,
+                                color=sp.color, linestyle=sp.linestyle, zorder=sp.zorder)
+
+                        if sp.label:
+                            ax.legend(loc='best').set_zorder(20)
 
                         ax.set_title(sp.title)
                         ax.set_xlabel(sp.attrs.get("standard_name"))

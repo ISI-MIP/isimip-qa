@@ -39,15 +39,11 @@ class DayOfYearPlot(FigurePlotMixin, GridPlotMixin, Plot):
                         ymin = self.get_ymin(sp, subplots)
                         ymax = self.get_ymax(sp, subplots)
 
-                        if sp.primary:
-                            ax.plot(sp.df.index, sp.df[sp.var], label=sp.label, zorder=10,
-                                    color=sp.color, linestyle='', marker=sp.marker)
+                        ax.plot(sp.df.index, sp.df[sp.var], label=sp.label, color=sp.color,
+                                linestyle='', marker=sp.marker, zorder=sp.zorder)
 
-                            if sp.label:
-                                ax.legend(loc='best').set_zorder(20)
-                        else:
-                            ax.plot(sp.df.index, sp.df[sp.var], zorder=0,
-                                    color='grey', linestyle='', marker='.')
+                        if sp.label:
+                            ax.legend(loc='best').set_zorder(20)
 
                         ax.set_title(sp.title)
                         ax.set_xlabel('day of the year')

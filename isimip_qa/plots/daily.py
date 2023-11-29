@@ -38,13 +38,11 @@ class DailyPlot(FigurePlotMixin, GridPlotMixin, Plot):
                         ymin = self.get_ymin(sp, subplots)
                         ymax = self.get_ymax(sp, subplots)
 
-                        if sp.primary:
-                            ax.plot(sp.df.index, sp.df[sp.var], label=sp.label, zorder=10,
-                                    color=sp.color, linestyle=sp.linestyle)
-                            if sp.label:
-                                ax.legend(loc='best').set_zorder(20)
-                        else:
-                            ax.plot(sp.df.index, sp.df[sp.var], zorder=0, color='grey')
+                        ax.plot(sp.df.index, sp.df[sp.var], label=sp.label,
+                                color=sp.color, linestyle=sp.linestyle, zorder=sp.zorder)
+
+                        if sp.label:
+                            ax.legend(loc='best').set_zorder(20)
 
                         xlabel = 'date'
                         if self.extraction_class.specifier == 'count':
