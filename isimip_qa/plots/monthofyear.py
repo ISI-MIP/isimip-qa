@@ -15,7 +15,7 @@ class MonthOfYearPlot(FigurePlotMixin, GridPlotMixin, Plot):
     def get_df(self, dataset):
         extraction = self.extraction_class(dataset, self.region, self.period)
         df = extraction.read()
-        return (df.groupby(lambda x: x.month).mean() - df.min()) / (df.max() - df.min())
+        return (df.groupby(lambda x: x.month).mean() - df.mean()) / df.std()
 
     def get_attrs(self, dataset):
         return AttrsExtraction(dataset, self.region, self.period).read()
@@ -40,16 +40,17 @@ class MonthOfYearPlot(FigurePlotMixin, GridPlotMixin, Plot):
                         ymax = self.get_ymax(sp, subplots)
 
                         if sp.primary:
-                            ax.plot(sp.df.index, sp.df[sp.var], 'o', color=sp.color,
-                                    linestyle=sp.linestyle, label=sp.label, zorder=10)
+                            ax.plot(sp.df.index, sp.df[sp.var], label=sp.label, zorder=10,
+                                    color=sp.color, linestyle=sp.linestyle, marker=sp.marker)
                             if sp.label:
                                 ax.legend(loc='best').set_zorder(20)
                         else:
-                            ax.plot(sp.df.index, sp.df[sp.var], 'o', color='grey', zorder=0)
+                            ax.plot(sp.df.index, sp.df[sp.var], zorder=0,
+                                    color='grey', linestyle='-', marker='.')
 
                         ax.set_title(sp.title)
                         ax.set_xlabel('month of the year')
-                        ax.set_ylabel(fr'({sp.var} - ${sp.var}_{{min}})$ / (${sp.var}_{{max}}$ - ${sp.var}_{{min}}$)'
+                        ax.set_ylabel(fr'({sp.var} - ${sp.var}_{{\mu}})$ / ${sp.var}_{{\sigma}}$'
                                       fr' [{sp.attrs.get("units")}]')
                         ax.set_ylim(ymin, ymax)
                         ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
