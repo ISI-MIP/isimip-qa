@@ -85,8 +85,13 @@ class MapPlot(FigurePlotMixin, GridPlotMixin, Plot):
                         ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
                         if ax not in cbars:
+                            if self.extraction_class.specifier == 'countmap':
+                                label = f'{sp.var} [count]'
+                            else:
+                                label = f'{sp.var} [{sp.attrs.get("units")}]'
+
                             cbar = plt.colorbar(im, ax=ax)
-                            cbar.set_label(f'{sp.var} [{sp.attrs.get("units")}]')
+                            cbar.set_label(label)
                             cbar.set_ticks([vmin, vmax])
                             cbars.append(ax)
 

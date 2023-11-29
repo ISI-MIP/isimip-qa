@@ -37,13 +37,13 @@ class CDFPlot(FigurePlotMixin, GridPlotMixin, Plot):
                         ax = axs.item(sp.irow, sp.icol)
 
                         ymin = self.get_ymin(sp, subplots)
-                        ymax = self.get_ymax(sp, subplots)
+                        ymax = 1.0
 
                         if sp.primary:
                             ax.step(sp.df.index, sp.df[sp.var], where='mid', color=sp.color,
                                     linestyle=sp.linestyle, label=sp.label, zorder=10)
                             if sp.label:
-                                ax.legend(loc='lower left').set_zorder(20)
+                                ax.legend(loc='best').set_zorder(20)
                         else:
                             ax.step(sp.df.index, sp.df[sp.var], where='mid', color='grey', zorder=0)
 

@@ -14,7 +14,8 @@ class DayOfYearPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     def get_df(self, dataset):
         extraction = self.extraction_class(dataset, self.region, self.period)
-        return extraction.read().groupby(lambda x: x.dayofyear).mean()
+        df = extraction.read()
+        return (df.groupby(lambda x: x.dayofyear).mean() - df.min()) / (df.max() - df.min())
 
     def get_attrs(self, dataset):
         return AttrsExtraction(dataset, self.region, self.period).read()
@@ -39,12 +40,13 @@ class DayOfYearPlot(FigurePlotMixin, GridPlotMixin, Plot):
                         ymax = self.get_ymax(sp, subplots)
 
                         if sp.primary:
-                            ax.step(sp.df.index, sp.df[sp.var], where='mid', color=sp.color,
-                                    linestyle=sp.linestyle, label=sp.label, zorder=10)
+                            ax.plot(sp.df.index, sp.df[sp.var], '.', color=sp.color,
+                                    linestyle='', label=sp.label, zorder=10)
+
                             if sp.label:
-                                ax.legend(loc='lower left').set_zorder(20)
+                                ax.legend(loc='best').set_zorder(20)
                         else:
-                            ax.step(sp.df.index, sp.df[sp.var], where='mid', color='grey', zorder=0)
+                            ax.plot(sp.df.index, sp.df[sp.var], '.', color='grey', zorder=0)
 
                         ax.set_title(sp.title)
                         ax.set_xlabel('day of the year')

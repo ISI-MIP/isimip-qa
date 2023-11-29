@@ -17,6 +17,8 @@ class FigurePlotMixin:
     def write(self, fig, path):
         path.parent.mkdir(exist_ok=True, parents=True)
 
+        plt.rcParams.update({'mathtext.default': 'regular'})
+
         logger.info(f'write {path}')
         try:
             fig.savefig(path)

@@ -42,13 +42,16 @@ class YearlyPlot(FigurePlotMixin, GridPlotMixin, Plot):
                             ax.step(sp.df.index, sp.df[sp.var], where='mid', color=sp.color,
                                     linestyle=sp.linestyle, label=sp.label, zorder=10)
                             if sp.label:
-                                ax.legend(loc='lower left').set_zorder(20)
+                                ax.legend(loc='best').set_zorder(20)
                         else:
                             ax.step(sp.df.index, sp.df[sp.var], where='mid', color='grey', zorder=0)
 
+                        xlabel = 'date'
+                        ylabel = fr'${sp.var}_{{yearly}}$ [{sp.attrs.get("units")}]'
+
                         ax.set_title(sp.title)
-                        ax.set_xlabel('date')
-                        ax.set_ylabel(f'{sp.var} [{sp.attrs.get("units")}]')
+                        ax.set_xlabel(xlabel)
+                        ax.set_ylabel(ylabel)
                         ax.set_ylim(ymin, ymax)
                         ax.tick_params(bottom=True, labelbottom=True, left=True, labelleft=True)
 
