@@ -14,7 +14,11 @@ class YearlyPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     def get_df(self, dataset):
         extraction = self.extraction_class(dataset, self.region, self.period)
-        return extraction.read().groupby(lambda x: x.year).mean()
+        df = extraction.read()
+        df_std = df.groupby(lambda x: x.year).std()
+        df_mean = df.groupby(lambda x: x.year).mean()
+        df_mean.insert(0, 'std', df_std)
+        return df_mean
 
     def get_attrs(self, dataset):
         return AttrsExtraction(dataset, self.region, self.period).read()
@@ -40,6 +44,8 @@ class YearlyPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
                         ax.step(sp.df.index, sp.df[sp.var], where='mid', label=sp.label,
                                 color=sp.color, linestyle=sp.linestyle, zorder=sp.zorder)
+                        ax.fill_between(sp.df.index, sp.df[sp.var] - sp.df['std'], sp.df[sp.var] + sp.df['std'],
+                                        step='mid', alpha=0.3)
 
                         if sp.label:
                             ax.legend(loc='best').set_zorder(20)
