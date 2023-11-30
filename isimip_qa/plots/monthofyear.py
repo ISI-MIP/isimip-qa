@@ -14,9 +14,9 @@ class MonthOfYearPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     def get_df(self, dataset):
         extraction = self.extraction_class(dataset, self.region, self.period)
-        df = extraction.read()
+        df = extraction.read().groupby(lambda x: x.month).mean()
         mean, std =  df.mean().values, df.std().values
-        return (df.groupby(lambda x: x.month).mean() - mean) / (std if std > 0 else 1.0)
+        return (df - mean) / (std if std > 0 else 1.0)
 
     def get_attrs(self, dataset):
         return AttrsExtraction(dataset, self.region, self.period).read()
