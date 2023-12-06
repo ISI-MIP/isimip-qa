@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class DailyPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     specifier = 'daily'
-    extractions = ['count', 'mean']
+    extractions = ['count']
 
     def get_df(self, dataset):
         extraction = self.extraction_class(dataset, self.region, self.period)
