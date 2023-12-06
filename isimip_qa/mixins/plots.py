@@ -21,6 +21,7 @@ class FigurePlotMixin:
 
         logger.info(f'write {path}')
         try:
+            fig.suptitle(path.stem)
             fig.savefig(path)
         except ValueError as e:
             logger.error(f'could not save {path} ({e})')
