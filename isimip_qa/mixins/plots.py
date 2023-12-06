@@ -236,7 +236,11 @@ class GridPlotMixin:
 
     def get_style(self, i):
         if self.dimensions:
-            label = self.permutations[i][self.grid:]
+            if self.figs > 0:
+                label = self.permutations[i][self.grid:-self.figs]
+            else:
+                label = self.permutations[i][self.grid:]
+
             if label not in self.styles:
                 index = len(self.styles.keys())
                 color_index = index % len(self.colors)
