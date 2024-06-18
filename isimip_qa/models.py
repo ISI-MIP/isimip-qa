@@ -49,10 +49,10 @@ class File:
         logger.info(f'open {self.path}')
 
         try:
-            self.ds = xr.open_dataset(self.path, chunks={'time': 'auto'})
+            self.ds = xr.open_dataset(self.path)
         except ValueError:
             # workaround for non standard times (e.g. growing seasons)
-            self.ds = xr.open_dataset(self.path, chunks={'time': 'auto'}, decode_times=False)
+            self.ds = xr.open_dataset(self.path, decode_times=False)
 
             if self.ds['time'].units.startswith('growing seasons'):
                 units = self.ds['time'].units.replace('growing seasons', 'common_years')
@@ -67,6 +67,7 @@ class File:
     def close(self):
         logger.info(f'close {self.path}')
         self.ds.close()
+        del self.ds
 
 
 class Region:
