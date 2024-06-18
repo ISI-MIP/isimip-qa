@@ -45,7 +45,7 @@ class YearlyPlot(FigurePlotMixin, GridPlotMixin, Plot):
                         ax.step(sp.df.index, sp.df[sp.var], where='mid', label=sp.label,
                                 color=sp.color, linestyle=sp.linestyle, zorder=sp.zorder)
                         ax.fill_between(sp.df.index, sp.df[sp.var] - sp.df['std'], sp.df[sp.var] + sp.df['std'],
-                                        step='mid', alpha=0.3, color=sp.color)
+                                        step='mid', alpha=0.1, color=sp.color)
 
                         if sp.label:
                             ax.legend(loc='best').set_zorder(20)
