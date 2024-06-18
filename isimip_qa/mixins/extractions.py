@@ -28,6 +28,42 @@ class RemoteExtractionMixin:
                 logger.info('could not fetch %s', path)
 
 
+class NetCDFExtractionMixin:
+
+    @property
+    def path(self):
+        replacements = {'region': self.region.specifier, 'extraction': self.specifier}
+        if self.period.type == 'slice':
+            replacements.update({'start_date': self.period.start_date, 'end_date': self.period.end_date})
+
+        path = self.dataset.replace_name(**replacements)
+        return settings.EXTRACTIONS_PATH.joinpath(path).with_suffix('.nc')
+
+    def write(self):
+        self.path.parent.mkdir(exist_ok=True, parents=True)
+
+        for varname, attrs in self.attrs.items():
+            self.ds[varname].attrs.update(attrs)
+
+        encoding = {}
+        for varname in self.ds.variables:
+            encoding[varname] = {'dtype': np.dtype('float64'), '_FillValue': 1e+20}
+            if varname in self.attrs.keys():
+                encoding[varname]['zlib'] = True
+
+        self.ds.to_netcdf(self.path, format='NETCDF4_CLASSIC', encoding=encoding)
+
+    def read(self):
+        return xr.open_dataset(self.path)
+
+    def concat(self, ds, dim='time'):
+        try:
+            self.ds = xr.concat([self.ds, ds], dim)
+        except AttributeError:
+            self.ds = ds.copy()
+        del ds
+
+
 class CSVExtractionMixin:
 
     @property

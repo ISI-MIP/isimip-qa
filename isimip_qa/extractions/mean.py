@@ -2,13 +2,13 @@ import logging
 
 import numpy as np
 
-from ..mixins import CSVExtractionMixin, RemoteExtractionMixin
+from ..mixins import NetCDFExtractionMixin, RemoteExtractionMixin
 from ..models import Extraction
 
 logger = logging.getLogger(__name__)
 
 
-class MeanExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
+class MeanExtraction(NetCDFExtractionMixin, RemoteExtractionMixin, Extraction):
 
     specifier = 'mean'
     region_types = ['global', 'mask', 'point']
@@ -34,5 +34,11 @@ class MeanExtraction(CSVExtractionMixin, RemoteExtractionMixin, Extraction):
 
             ds = ds.weighted(weights).mean(dim=('lat', 'lon'), skipna=True)
 
-        logger.info(f'write {self.path}')
-        self.write(ds, append=not file.first)
+        self.concat(ds)
+
+        if file.first:
+            self.attrs = {varname: var.attrs for varname, var in file.ds.data_vars.items()}
+
+        if file.last:
+            logger.info(f'write {self.path}')
+            self.write()

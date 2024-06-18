@@ -14,7 +14,11 @@ class DayOfYearPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     def get_df(self, dataset):
         extraction = self.extraction_class(dataset, self.region, self.period)
-        df = extraction.read().groupby(lambda x: x.dayofyear).mean()
+        ds = extraction.read()
+        df = ds.to_dataframe()
+        df.attrs = {varname: var.attrs for varname, var in ds.variables.items()}
+
+        df = df.groupby(lambda x: x.dayofyear).mean()
         mean, std =  df.mean().values, df.std().values
         return (df - mean) / (std if std > 0 else 1.0)
 

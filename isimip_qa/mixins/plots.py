@@ -213,7 +213,7 @@ class GridPlotMixin:
         raise NotImplementedError
 
     def get_attrs(self, dataset):
-        raise NotImplementedError
+        return {}
 
     def get_primary(self, i):
         if self.dimensions and settings.PRIMARY:

@@ -1,6 +1,5 @@
 import logging
 
-from ..extractions import AttrsExtraction
 from ..mixins import FigurePlotMixin, GridPlotMixin
 from ..models import Plot
 
@@ -14,14 +13,14 @@ class YearlyPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     def get_df(self, dataset):
         extraction = self.extraction_class(dataset, self.region, self.period)
-        df = extraction.read()
+        ds = extraction.read()
+        df = ds.to_dataframe()
+        df.attrs = {varname: var.attrs for varname, var in ds.variables.items()}
+
         df_std = df.groupby(lambda x: x.year).std()
         df_mean = df.groupby(lambda x: x.year).mean()
         df_mean.insert(0, 'std', df_std)
         return df_mean
-
-    def get_attrs(self, dataset):
-        return AttrsExtraction(dataset, self.region, self.period).read()
 
     def create(self):
         logger.info(f'plot {self.region.specifier} {self.extraction_class.specifier} {self.specifier}')
@@ -51,7 +50,7 @@ class YearlyPlot(FigurePlotMixin, GridPlotMixin, Plot):
                             ax.legend(loc='best').set_zorder(20)
 
                         xlabel = 'date'
-                        ylabel = fr'${sp.var}_{{yearly}}$ [{sp.attrs.get("units")}]'
+                        ylabel = fr'${sp.var}_{{yearly}}$ [{sp.df.attrs.get(sp.var, {}).get("units")}]'
 
                         ax.set_title(sp.title)
                         ax.set_xlabel(xlabel)

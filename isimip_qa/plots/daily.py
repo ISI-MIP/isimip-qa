@@ -14,7 +14,11 @@ class DailyPlot(FigurePlotMixin, GridPlotMixin, Plot):
 
     def get_df(self, dataset):
         extraction = self.extraction_class(dataset, self.region, self.period)
-        return extraction.read()
+        ds = extraction.read()
+        df = ds.to_dataframe()
+        df.attrs = {varname: var.attrs for varname, var in ds.variables.items()}
+
+        return df
 
     def get_attrs(self, dataset):
         return AttrsExtraction(dataset, self.region, self.period).read()
