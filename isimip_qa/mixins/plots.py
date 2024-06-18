@@ -258,7 +258,7 @@ class GridPlotMixin:
 
     def get_ymin(self, subplot, subplots):
         if settings.YMIN is None:
-            return min([sp.df[sp.var].min() for sp in subplots
+            return min([sp.df[sp.df > 0].loc[:, sp.var].min() for sp in subplots
                         if self.is_in_same_plot(sp, subplot)]) * 0.99
         else:
             return settings.YMIN
@@ -272,7 +272,7 @@ class GridPlotMixin:
 
     def get_vmin(self, subplot, subplots):
         if settings.VMIN is None:
-            return min([sp.df[sp.var].min() for sp in subplots
+            return min([sp.df[sp.df > 0].loc[:, sp.var].min() for sp in subplots
                         if self.is_in_same_plot(sp, subplot)])
         else:
             return settings.VMIN
