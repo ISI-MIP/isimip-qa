@@ -134,7 +134,7 @@ def get_chart(df, plot, labels=None, **kwargs):
         return plot_line(df, y_format='.1e', **kwargs)
 
     elif plot.type == 'annual':
-        return plot_line(df, y_format='.1e', interpolate='step-after', **kwargs)
+        return plot_line(df, x_type='Q', x_format='d', y_format='.1e', interpolate='step-after', **kwargs)
 
     elif plot.type == 'dayofyear':
         return plot_line(df, **kwargs)
