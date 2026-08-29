@@ -9,8 +9,8 @@ class Settings(BaseSettings):
 
     @cached_property
     def WEIGHTS(self):
-        if self.GRIDAREA:
-            ds = open_dataset(self.GRIDAREA, load=self.LOAD)
+        if self.GRIDAREA_PATH:
+            ds = open_dataset(self.GRIDAREA_PATH, load=self.LOAD)
             ds = ds.isel(lon=0)
             return ds.cell_area
 

@@ -54,7 +54,7 @@ def main():
     parser.add_argument('--plots-only', dest='plots_only', action='store_true', default=False,
                         help='Only create plots')
 
-    parser.add_argument('--gridarea', dest='gridarea', type=parse_path,
+    parser.add_argument('--gridarea-path', dest='gridarea_path', type=parse_path,
                         help='Use a CDO gridarea file instead of computing the gridarea when computing means')
 
     parser.add_argument('--plot-format', dest='plot_format', default='svg',
