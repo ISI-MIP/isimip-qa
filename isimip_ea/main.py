@@ -70,8 +70,8 @@ def main():
                         help='Parameters for which separate figures are created')
     parser.add_argument('--figure-path', dest='figure_path', type=parse_path, default=None,
                         help='Custom paths for the created figures, can contain placeholders')
-    parser.add_argument('--color-scheme', dest='color_scheme', default='category20',
-                        help='Color scheme to use for plots [default: category20].')
+    parser.add_argument('--color-scheme', dest='color_scheme', default='turbo',
+                        help='Color scheme to use for plots [default: turbo].')
 
     parser.add_argument('--independent-x', dest='independent_x', action='store_true', default=False,
                         help='Use independent x axis in plots')
