@@ -147,4 +147,4 @@ def update_path(path, period, region, aggregation, plot=None, start_year=None, e
     if end_year:
         stem += f'_{end_year}'
 
-    return path.with_stem(stem)
+    return path.with_stem(stem.lower())
