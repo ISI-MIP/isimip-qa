@@ -1,4 +1,5 @@
 from isimip_utils.cli import ArgumentParser, parse_list, parse_locations, parse_path, setup_logs
+from isimip_utils.exceptions import ConfigError
 
 from . import VERSION
 from .cli import ArgumentAction
@@ -99,7 +100,10 @@ def main():
 
     parser.add_argument('-V', '--version', action='version', version=VERSION)
 
-    args = parser.parse_args(remaining_args, config_path=config_args.config_path)
+    try:
+        args = parser.parse_args(remaining_args, config_path=config_args.config_path)
+    except ConfigError as e:
+        config_parser.error(e)
 
     setup_logs(log_level=args.log_level, log_file=args.log_file, show_time=args.show_time, show_path=args.show_path)
 
