@@ -119,7 +119,7 @@ class Extraction:
                 return file_path.relative_to(settings.EXTRACTIONS_PATH)
 
             # try to find the extraction online
-            if settings.EXTRACTIONS_LOCATIONS:
+            if settings.FETCH_EXTRACTIONS:
                 for location in settings.EXTRACTIONS_LOCATIONS:
                     if isinstance(location, Path):
                         pass

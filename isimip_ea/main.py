@@ -48,12 +48,12 @@ def main():
     parser.add_argument('-l', '--load', dest='load', action='store_true', default=False,
                         help='Load NetCDF datasets in memory, useful for point extractions')
 
-    parser.add_argument('--fetch-only', dest='fetch_only', action='store_true', default=False,
-                        help='Only fetch extractions')
-    parser.add_argument('--extractions-only', dest='extractions_only', action='store_true', default=False,
-                        help='Only create extractions')
-    parser.add_argument('--plots-only', dest='plots_only', action='store_true', default=False,
-                        help='Only create plots')
+    parser.add_argument('--fetch-extractions', dest='fetch_extractions', action='store_true', default=False,
+                        help='Try to fetch extractions from the ISIMIP repository')
+    parser.add_argument('--skip-extractions', dest='skip_extractions', action='store_true', default=False,
+                        help='Skip extractions')
+    parser.add_argument('--skip-plots', dest='skip_plots', action='store_true', default=False,
+                        help='Skip plots')
 
     parser.add_argument('--gridarea-path', dest='gridarea_path', type=parse_path,
                         help='Use a CDO gridarea file instead of computing the gridarea when computing means')
@@ -118,13 +118,13 @@ def main():
     plots = [Plot(value) for value in settings.PLOTS]
 
     # fetch extractions
-    if not settings.EXTRACTIONS_ONLY and not settings.PLOTS_ONLY and settings.EXTRACTIONS_LOCATIONS:
+    if settings.FETCH_EXTRACTIONS:
         fetch_extractions(periods, regions, aggregations)
 
     # create the extractions
-    if not settings.FETCH_ONLY and not settings.PLOTS_ONLY:
+    if not settings.SKIP_EXTRACTIONS:
         create_extractions(periods, regions, aggregations)
 
     # create the plots
-    if not settings.FETCH_ONLY and not settings.EXTRACTIONS_ONLY:
+    if not settings.SKIP_PLOTS:
         create_plots(periods, regions, aggregations, plots)
