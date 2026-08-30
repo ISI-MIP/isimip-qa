@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from isimip_utils.pandas import compute_average, create_label, group_by_day, group_by_month, normalize
 from isimip_utils.parameters import copy_placeholders, get_placeholders, join_parameters
-from isimip_utils.plot import format_title, plot_grid, plot_line, plot_map, save_index, save_plot
+from isimip_utils.plot import check_plots, format_title, plot_grid, plot_line, plot_map, save_index, save_plot
 from isimip_utils.xarray import open_dataset, to_dataframe
 
 from .config import settings
@@ -53,14 +53,17 @@ def create_plots(periods, regions, aggregations, plots):
                                 if charts:
                                     empty_chart = get_chart(df, plot, empty=True)
 
-                                    chart = plot_grid(
-                                        settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
-                                        charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
-                                    ).properties(title=get_title(figs_permutation, period, region, aggregation, plot))
+                                    if check_plots(charts, figure.full_path):
+                                        chart = plot_grid(
+                                            settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
+                                            charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
+                                        ).properties(
+                                            title=get_title(figs_permutation, period, region, aggregation, plot)
+                                        )
 
-                                    save_plot(chart, figure.full_path)
+                                        save_plot(chart, figure.full_path)
 
-                                    index_paths.add(figure.full_path.parent)
+                                        index_paths.add(figure.full_path.parent)
 
     if settings.PLOT_INDEX:
         for parent_path in index_paths:
