@@ -3,7 +3,16 @@ import logging
 import numpy as np
 from isimip_utils.pandas import compute_average, create_label, group_by_day, group_by_month, normalize
 from isimip_utils.parameters import copy_placeholders, get_placeholders, join_parameters
-from isimip_utils.plot import check_plots, format_title, plot_grid, plot_line, plot_map, save_index, save_plot
+from isimip_utils.plot import (
+    check_plots,
+    format_legend,
+    format_title,
+    plot_grid,
+    plot_line,
+    plot_map,
+    save_index,
+    save_plot,
+)
 from isimip_utils.xarray import open_dataset, to_dataframe
 
 from .config import settings
@@ -58,8 +67,16 @@ def create_plots(periods, regions, aggregations, plots):
                                             settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
                                             charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
                                         ).properties(
-                                            title=get_title(figs_permutation, period, region, aggregation, plot)
+                                            title=format_title(
+                                                get_title(figs_permutation, period, region, aggregation, plot)
+                                            )
                                         )
+
+                                        chart = chart.configure_legend(**format_legend(
+                                            direction='horizontal' if (plot.type == 'map') else 'vertical',
+                                            orient='bottom',
+                                            columns=2
+                                        ))
 
                                         save_plot(chart, figure.full_path)
 
@@ -164,4 +181,4 @@ def get_title(permutation, period, region, aggregation, plot):
     if plot.type != 'value':
         args.append(plot.specifier)
 
-    return format_title(args)
+    return ' · '.join(args)
