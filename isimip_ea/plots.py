@@ -42,6 +42,7 @@ def create_plots(periods, regions, aggregations, plots):
 
                             if settings.FORCE or not figure.exists():
                                 charts = {}
+                                chart_permutations = set()
                                 for grid_permutation in settings.GRID_PERMUTATIONS:
                                     for plot_permutation in settings.PLOT_PERMUTATIONS:
                                         dataset_placeholders = copy_placeholders(
@@ -58,6 +59,7 @@ def create_plots(periods, regions, aggregations, plots):
                                                 if df is not None:
                                                     chart = get_chart(df, plot, labels=plot_permutation)
                                                     charts[grid_permutation + plot_permutation] = chart
+                                                    chart_permutations.add(plot_permutation)
 
                                 if charts:
                                     empty_chart = get_chart(df, plot, empty=True)
@@ -67,16 +69,10 @@ def create_plots(periods, regions, aggregations, plots):
                                             settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
                                             charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
                                         ).properties(
-                                            title=format_title(
-                                                get_title(figs_permutation, period, region, aggregation, plot)
-                                            )
+                                            title=get_title(figs_permutation, period, region, aggregation, plot)
                                         )
 
-                                        chart = chart.configure_legend(**format_legend(
-                                            direction='horizontal' if (plot.type == 'map') else 'vertical',
-                                            orient='bottom',
-                                            columns=2
-                                        ))
+                                        chart = chart.configure_legend(**get_legend(chart, chart_permutations, plot))
 
                                         save_plot(chart, figure.full_path)
 
@@ -172,8 +168,7 @@ def get_title(permutation, period, region, aggregation, plot):
     if period.type != 'auto':
         args.append(period.specifier)
 
-    if region.type != 'global':
-        args.append(region.specifier)
+    args.append(region.specifier)
 
     if aggregation.type != 'value':
         args.append(aggregation.specifier)
@@ -181,4 +176,19 @@ def get_title(permutation, period, region, aggregation, plot):
     if plot.type != 'value':
         args.append(plot.specifier)
 
-    return ' · '.join(args)
+    return format_title(' · '.join(args))
+
+def get_legend(chart, chart_permutations, plot):
+    kwargs = {}
+
+    n_rows = len(chart.vconcat[0].hconcat)
+    n_legend = len(chart_permutations)
+
+    if plot.type == 'map':
+        kwargs['direction'] = 'horizontal'
+
+    if n_legend > 16 or n_rows > 4:
+        kwargs['orient'] = 'bottom'
+        kwargs['columns'] = min(n_legend // 8, n_rows)
+
+    return format_legend(**kwargs)
