@@ -35,7 +35,7 @@ def create_plots(periods, regions, aggregations, plots):
                             figure_placeholders = copy_placeholders(
                                 get_placeholders(settings.FIGS_PARAMETERS, figs_permutation),
                                 join_parameters(settings.GRID_PARAMETERS, max_count=4),
-                                join_parameters(settings.PLOT_PARAMETERS, max_count=4)
+                                join_parameters(settings.PLOT_PARAMETERS, max_count=4),
                             )
 
                             figure = Figure(path, figure_placeholders, period, region, aggregation, plot)
@@ -66,8 +66,11 @@ def create_plots(periods, regions, aggregations, plots):
 
                                     if check_plots(charts, figure.full_path):
                                         chart = plot_grid(
-                                            settings.GRID_PERMUTATIONS, settings.PLOT_PERMUTATIONS,
-                                            charts, empty_chart, **settings.PLOT_RESOLVE_SCALE
+                                            settings.GRID_PERMUTATIONS,
+                                            settings.PLOT_PERMUTATIONS,
+                                            charts,
+                                            empty_chart,
+                                            **settings.PLOT_RESOLVE_SCALE,
                                         ).properties(
                                             title=get_title(figs_permutation, period, region, aggregation, plot)
                                         )
@@ -177,6 +180,7 @@ def get_title(permutation, period, region, aggregation, plot):
         args.append(plot.specifier)
 
     return format_title(' · '.join(args))
+
 
 def get_legend(chart, chart_permutations, plot):
     kwargs = {}

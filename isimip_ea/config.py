@@ -6,7 +6,6 @@ from isimip_utils.xarray import open_dataset
 
 
 class Settings(BaseSettings):
-
     @cached_property
     def WEIGHTS(self):
         if self.GRIDAREA_PATH:
@@ -24,10 +23,15 @@ class Settings(BaseSettings):
 
     @cached_property
     def PLOT_PARAMETERS(self):
-        return {
-            key: values for key, values in self.PARAMETERS.items()
-            if key not in self.FIGURE_PLACEHOLDERS + self.GRID_PLACEHOLDERS
-        } if self.PARAMETERS else {}
+        return (
+            {
+                key: values
+                for key, values in self.PARAMETERS.items()
+                if key not in self.FIGURE_PLACEHOLDERS + self.GRID_PLACEHOLDERS
+            }
+            if self.PARAMETERS
+            else {}
+        )
 
     @cached_property
     def FIGS_PERMUTATIONS(self):
