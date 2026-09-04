@@ -174,7 +174,18 @@ class Figure:
     @cached_property
     def path(self):
         if settings.FIGURE_PATH:
-            figure_path_template = settings.FIGURE_PATH / Path(self.path_template).name
+            figure_path = apply_placeholders(
+                settings.FIGURE_PATH,
+                {
+                    'period': self.period.specifier,
+                    'region': self.region.specifier,
+                    'aggregation': self.aggregation.specifier,
+                    'plot': self.plot.specifier,
+                    **self.placeholders,
+                },
+            )
+
+            figure_path_template = Path(figure_path) / Path(self.path_template).name
         else:
             # find the  placeholder which is not in FIGS_PLACEHOLDERS or GRID_PLACEHOLDERS
             figure_path_template = self.path_template
@@ -187,8 +198,10 @@ class Figure:
                         figure_path_template = Path(*parts[:i]) / name
                         break
 
+        placeholders = {**self.placeholders, 'region': self.region}
+
         path = update_path(
-            apply_placeholders(figure_path_template, self.placeholders),
+            apply_placeholders(figure_path_template, placeholders),
             self.period,
             self.region,
             self.aggregation,
