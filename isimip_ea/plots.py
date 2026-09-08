@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 import numpy as np
 from isimip_utils.pandas import compute_average, create_label, group_by_day, group_by_month, normalize
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 def create_plots(periods, regions, aggregations, plots):
     logger.info('Creating plots')
 
-    index_paths = set()
+    index_paths = defaultdict(list)
 
     for period in periods:
         for region in regions:
@@ -79,11 +80,11 @@ def create_plots(periods, regions, aggregations, plots):
 
                                         save_plot(chart, figure.full_path)
 
-                                        index_paths.add(figure.full_path.parent)
+                                        index_paths[figure.full_path.parent].append(figure.full_path)
 
     if settings.PLOT_INDEX:
-        for parent_path in index_paths:
-            save_index(parent_path / 'index.html')
+        for parent_path, paths in index_paths.items():
+            save_index(parent_path, paths)
 
 
 def get_dataframe(ds, plot, labels):
